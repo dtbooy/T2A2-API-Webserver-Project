@@ -13,7 +13,7 @@ class Author(db.Model):
     # Relationships
     works = db.relationship("Work", back_populates="author")
 
-class UserSchema(ma.Schema):
+class AuthorSchema(ma.Schema):
 
     class Meta:
         ordered = True
