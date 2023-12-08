@@ -11,7 +11,7 @@ class Author(db.Model):
     surname = db.Column(db.String, nullable=False)
     given_names = db.Column(db.String)
     # Relationships
-    works = db.relationship("Work", back_populates="author")
+    works = db.relationship("Work", back_populates="author", cascade="all, delete-orphan")
 
 class AuthorSchema(ma.Schema):
 

@@ -17,13 +17,13 @@ class UserWishlist(db.Model):
     book_id = db.Column(db.Integer, db.ForeignKey(
         "books.id"), nullable=False)
     # Relationships
-    user = db.relationship("User", back_populates="users_books")
-    book = db.relationship("Book", back_populates="users_books")
+    user = db.relationship("User", back_populates="users_wishlists")
+    book = db.relationship("Book", back_populates="users_wishlists")
 
 # Users_Groups Schema
 class UserWishlistSchema(ma.Schema):
     user = fields.Nested("UserSchema", exclude=["password", "is_admin"])
-    book = fields.Pluck("BookSchema")
+    book = fields.Pluck("BookSchema", "title")
     quality = fields.String(validate=OneOf(QUALITIES))
     class Meta:
         ordered = True

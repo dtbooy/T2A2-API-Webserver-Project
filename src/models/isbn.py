@@ -6,7 +6,7 @@ class Isbn(db.Model):
     # Table name
     __tablename__ = "isbns"
     # PK
-    isbn = db.Column(db.Integer, primary_key=True)
+    isbn = db.Column(db.String(13), primary_key=True, autoincrement=False)
     # FK
     book_id = db.Column(db.Integer, db.ForeignKey(
         "books.id"), nullable=False)

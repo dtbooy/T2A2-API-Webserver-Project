@@ -8,10 +8,10 @@ class Group(db.Model):
     # PK
     id = db.Column(db.Integer, primary_key=True)
     # Attributes
-    rname = db.Column(db.String, nullable=False)
+    name = db.Column(db.String, nullable=False)
     password = db.Column(db.String)
     # Relationships
-    users_groups = db.relationship("UserGroup", back_populates="group")
+    users_groups = db.relationship("UserGroup", back_populates="group", cascade="all, delete-orphan")
 
 class GroupSchema(ma.Schema):
     users = fields.Nested("UserGroupSchema", many=True, only=["user"])
