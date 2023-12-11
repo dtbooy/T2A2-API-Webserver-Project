@@ -1,56 +1,74 @@
 from app import db, bcrypt
 from models.user import User, UserSchema
-from flask_jwt_extended import create_access_token
-from flask import Blueprint, request
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import Blueprint, request, abort
 from datetime import timedelta
+from controllers.auth_controller import is_admin, is_user_or_admin
 
-auth = Blueprint("auth", __name__, url_prefix="/auth")
+users = Blueprint("users", __name__, url_prefix="/users")
 
-# Auth routes
-@auth.route("/login", methods=["POST"])
-def auth_login():
-    # request.json is the post data
-    login = UserSchema(exclude=["id"]).load(request.json)
-    # pull user details from the database
-    stmt = db.select(User).where(User.username==login["username"])
-    user = db.session.scalar(stmt)
-    # Check username & password
-    if not user or not bcrypt.check_password_hash(user.password, login["password"]):
-        return {"Error": "Username or password invalid"}, 412
-
-    token = create_access_token(user.id, expires_delta=timedelta(hours=1))
-    return {"Username" : user.username, "Token" : token}, 200
-
-@auth.route("/register", methods=["POST"])
-def auth_register():
-    # get user info
-    user_info = UserSchema().load(request.json)
-    # Check adequate password length
-    if len(user_info["password"]) <= 8:
-        return {"Error": "Password must be at least 8 characters"}, 400
-    
-    # check if user exists
-    stmt = db.select(User).where(User.username==user_info["username"])
-    exist = db.session.scalar(stmt)
-    if exist:
-        return {"Error": "Username exists"}, 400
-    
-    # Add new user to db
-    db.session.add(
-        User(
-            username=user_info["username"],
-            password=bcrypt.generate_password_hash(user_info["password"]).decode("utf-8")
-        )
-    )
-    db.session.commit()
-    # check the name is in the db
-    user = db.session.scalar(db.select(User).where(User.username==user_info["username"]))
-    # create a token for the new user 
-    token = create_access_token(user.id, expires_delta=timedelta(hours=1))
-    return {"Username" : user.username, "Token" : token}, 201
-
-@auth.route("/", methods=["GET"])
+# READ: ALL USERS
+@users.route("/", methods=["GET"])
+@jwt_required()
 def get_users():
+    # Only administrators can access user lists
+    is_admin()
+    # Database query: return all users
     stmt = db.select(User)
     users = db.session.scalars(stmt)
+    # exclude password hash in json Return
     return UserSchema(many=True, exclude=["password"]).dump(users)
+
+# READ: SINGLE USER
+@users.route("/<int:user_id>", methods=["GET"])
+@jwt_required()
+def get_user(user_id):
+    # Only administrator or <user_id> can access <user_id>
+    is_user_or_admin(user_id)
+    # Database query: return user with user_id
+    stmt = db.select(User).filter_by(id=user_id)
+    user = db.session.scalar(stmt)
+
+    # exclude password hash in json Return
+    return UserSchema(exclude=["password"]).dump(user)
+
+# UPDATE: USER
+@users.route("/<int:user_id>", methods=["PATCH", "PUT"])
+@jwt_required()
+def update_user(user_id):
+    # Only administrator or <user_id> can change <user_id> details
+    is_user_or_admin(user_id)
+    
+    # Database query: return user with user_id
+    stmt = db.select(User).filter_by(id=user_id)
+    user = db.session.scalar(stmt)
+    if not user:
+        return {"Error": "User not found"}, 404
+    # validate updated user info through schema 
+    user_info = UserSchema(exclude=["username", "id", "is_admin"]).load(request.json)
+    
+    user.email = user_info.get('email', user.email)
+    if user_info.get('password', None):
+        user.password = bcrypt.generate_password_hash(user_info['password'])
+
+    # exclude password hash in json return
+    return UserSchema(exclude=["password"]).dump(user), 200
+
+# DELETE: SINGLE USER
+@users.route("/<int:user_id>", methods=["DELETE"])
+@jwt_required()
+def delete_user(user_id):
+    # Only administrator or <user_id> can delete <user_id>
+    is_user_or_admin(user_id)
+    # Database query: return user with the user id user_id
+    stmt = db.select(User).filter_by(id=user_id)
+    user = db.session.scalar(stmt)
+    # Ensure user exists
+    if not user:
+        abort(404, description= "User doesn't exist")
+    # delete user from database & commit
+    db.session.delete(user)
+    db.session.commit()
+    # return empty body & 204 No Content response
+    return {}, 204
+

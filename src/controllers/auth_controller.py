@@ -1,7 +1,7 @@
 from app import db, bcrypt
-from flask import Blueprint, request
+from flask import Blueprint, request, abort
 from models.user import User, UserSchema
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, get_jwt_identity
 from datetime import timedelta
 
 auth = Blueprint("auth", __name__)
@@ -24,7 +24,7 @@ def auth_login():
     token = create_access_token(user.id, expires_delta=timedelta(hours=1))
     return {"Username" : user.username, "Token" : token}, 200
 
-# REGISTER
+# CREATE USER
 @auth.route("/register", methods=["POST"])
 def auth_register():
     # Load user details from request.json. exclude: 
@@ -55,8 +55,23 @@ def auth_register():
     token = create_access_token(user.id, expires_delta=timedelta(hours=1))
     return {"ID": user.id, "Username" : user.username, "Email" : user.email, "Token" : token}, 201
 
-# @auth.route("/", methods=["GET"])
-# def get_users():
-#     stmt = db.select(User)
-#     users = db.session.scalars(stmt)
-#     return UserSchema(many=True, exclude=["password"]).dump(users)
+# AUTH FUNCTIONS
+# CHECK IF USER HAS ADMINISTRATOR ACCESS
+def is_admin():
+    user_id = get_jwt_identity()
+    # Database query: return user with the user id stored in user_id
+    stmt = db.select(User).filter_by(id=user_id)
+    user = db.session.scalar(stmt)
+    # If user does not exist or is not an administrator, abort
+    if not user or not user.is_admin:
+        abort(403, description="Unauthorised: Admin privilages required to perform this action")
+
+# CHECK IF USER IS ADMIN OR ACCESSING OWN DATA
+def is_user_or_admin(id):
+    auth_id = get_jwt_identity()
+    # Database query: return user with the user id stored in auth_id
+    stmt = db.select(User).filter_by(id=auth_id)
+    user = db.session.scalar(stmt)
+    #Make sure it is in the database
+    if not user or not (auth_id == id or user.is_admin):
+        abort(403, description="Unauthorised: Access denied")
