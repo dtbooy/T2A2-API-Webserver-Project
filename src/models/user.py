@@ -1,5 +1,6 @@
 from app import db, ma
 from marshmallow import fields
+from marshmallow.validate import Length
 
 # Users Model
 class User(db.Model):
@@ -7,6 +8,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
+    email = db.Column(db.String, unique=True)
     is_admin = db.Column(db.Boolean, default=False)
 
     users_groups = db.relationship("UserGroup", back_populates="user", cascade="all, delete-orphan")
@@ -15,6 +17,7 @@ class User(db.Model):
 
 class UserSchema(ma.Schema):
     user_groups = fields.Pluck("UserGroupSchema", "group")
+    password = fields.String(validate=Length(min=6)) # -----------------------------------------------------------------------> DEBUG CHECK this code is correct
     class Meta:
         ordered = True
-        fields = ('id', 'username', 'password', "is_admin")
+        fields = ('id', 'username', 'password', "email", "is_admin")
