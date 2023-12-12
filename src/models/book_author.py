@@ -2,7 +2,7 @@ from app import db, ma
 from marshmallow import fields
 
 # Works table
-class Work(db.Model):
+class BookAuthor(db.Model):
     # Table name
     __tablename__ = 'works'
     # Attributes
@@ -13,14 +13,14 @@ class Work(db.Model):
     book_id = db.Column(db.Integer, db.ForeignKey(
         "books.id"), nullable=False)
     # Relationships
-    author = db.relationship("Author", back_populates="works")
-    book = db.relationship("Book", back_populates="works")
+    author = db.relationship("Author", back_populates="book_authors")
+    book = db.relationship("Book", back_populates="book_authors")
 
 # Works Schema
-class WorkSchema(ma.Schema):
-    # author = fields.Nested("AuthorSchema", exclude=["works"])
-    # book = fields.Pluck("BookSchema", "title")
+class BookAuthorSchema(ma.Schema):
+    author = fields.Nested("AuthorSchema")
+    book = fields.Pluck("BookSchema", "title")
     class Meta:
         ordered = True
-        fields = ('id', 'author_id', 'book_id')
+        fields = ('id', 'author_id', 'book_id', "author")
         

@@ -9,7 +9,7 @@ from models.user_group import UserGroup, UserGroupSchema
 from models.user_wishlist import UserWishlist, UserWishlistSchema
 from models.user import User, UserSchema
 from models.book import Book, BookSchema
-from models.work import Work, WorkSchema 
+from models.book_author import BookAuthor, BookAuthorSchema 
 from models.group import Group, GroupSchema
 
 db_commands = Blueprint("db", __name__)
@@ -260,14 +260,14 @@ def seed():
     db.session.commit()
 
 
-    #7 Seed works (authors_books join table)
-    author_works_dict = {0 : [0,1,2,3,4], 1 : [5,6,7], 2 : [8,9], 3 : [10,11,12,13,14,15,16], 5: [17], 6 : [17]}
-    works = []
-    for k, v in author_works_dict.items():
+    #7 Seed book_author (book_authors join table)
+    book_authors_dict = {0 : [0,1,2,3,4], 1 : [5,6,7], 2 : [8,9,7], 3 : [10,11,12,13,14,15,16], 5: [17], 6 : [17]}
+    book_authors = []
+    for k, v in book_authors_dict.items():
         for value in v:
-            works.append(Work(author_id = authors[k].id, book_id = books[value].id ))
+            book_authors.append(BookAuthor(author_id = authors[k].id, book_id = books[value].id ))
    
-    db.session.add_all(works)
+    db.session.add_all(book_authors)
     db.session.commit()
     #8 Seed users_books (join Table - Bookshelf)
     bookshelf_dict = {0 : [0,1,3,4,7,9,12], 1 : [0,5,6,7,16], 2 : [], 3 : [10,11,12,13,14,15,16], 4 :[12,5,3,6,7], 5: [11], 6 : [1], 7:[0]}
