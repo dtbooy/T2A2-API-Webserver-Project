@@ -11,8 +11,8 @@ class UserGroup(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), nullable=False)
     # Relationships
-    user = db.relationship("User", back_populates="users_groups")
-    group = db.relationship("Group", back_populates="users_groups")
+    user = db.relationship("User", back_populates="groups")
+    group = db.relationship("Group", back_populates="users")
 
 # Users_Groups Schema
 class UserGroupSchema(ma.Schema):
@@ -20,4 +20,4 @@ class UserGroupSchema(ma.Schema):
     group = fields.Pluck("GroupSchema", "name")
     class Meta:
         ordered = True
-        fields = ('id', 'user_id', 'group_id')
+        fields = ('id', 'user_id', 'group_id', "user", "group")

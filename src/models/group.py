@@ -11,10 +11,10 @@ class Group(db.Model):
     name = db.Column(db.String, nullable=False)
     password = db.Column(db.String)
     # Relationships
-    users_groups = db.relationship("UserGroup", back_populates="group", cascade="all, delete-orphan")
+    users = db.relationship("UserGroup", back_populates="group", cascade="all, delete-orphan")
 
 class GroupSchema(ma.Schema):
-    users = fields.Nested("UserGroupSchema", many=True, only=["user"])
+    users = fields.Pluck("UserGroupSchema", "user", many=True)
     class Meta:
         ordered = True
         fields = ("id", "name", "password", "users")

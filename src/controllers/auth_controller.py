@@ -1,6 +1,7 @@
 from app import db, bcrypt
 from flask import Blueprint, request, abort
 from models.user import User, UserSchema
+from models.user_group import UserGroup
 from flask_jwt_extended import create_access_token, get_jwt_identity
 from datetime import timedelta
 
@@ -74,4 +75,14 @@ def is_user_or_admin(id):
     user = db.session.scalar(stmt)
     #Make sure it is in the database
     if not user or not (auth_id == id or user.is_admin):
+        abort(403, description="Unauthorised: Access denied")
+
+def is_group_or_admin(group_id):
+    # Database query: return user with the user id stored in auth_id
+    stmt = db.select(User).filter_by(id=get_jwt_identity())
+    user = db.session.scalar(stmt)
+    stmt = db.select(UserGroup).where(UserGroup.group_id == group_id, UserGroup.user_id == user.id)
+    member = db.session.scalar(stmt)
+    #Make sure it is in the database
+    if not member and not user.is_admin:
         abort(403, description="Unauthorised: Access denied")

@@ -11,13 +11,13 @@ class User(db.Model):
     email = db.Column(db.String, unique=True)
     is_admin = db.Column(db.Boolean, default=False)
 
-    users_groups = db.relationship("UserGroup", back_populates="user", cascade="all, delete-orphan")
+    groups = db.relationship("UserGroup", back_populates="user", cascade="all, delete-orphan")
     users_books = db.relationship("UserBook", back_populates="user", cascade="all, delete-orphan")
     users_wishlists = db.relationship("UserWishlist", back_populates="user", cascade="all, delete-orphan")
 
 class UserSchema(ma.Schema):
-    user_groups = fields.Pluck("UserGroupSchema", "group")
+    groups = fields.Pluck("UserGroupSchema", "group", many=True)
     password = fields.String(validate=Length(min=6)) # -----------------------------------------------------------------------> DEBUG CHECK this code is correct
     class Meta:
         ordered = True
-        fields = ('id', 'username', 'password', "email", "is_admin")
+        fields = ('id', 'username', 'password', "email", "is_admin", "groups")

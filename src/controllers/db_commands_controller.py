@@ -34,19 +34,23 @@ def seed():
     users = [
         User(
             username = "JamesHolden",
-            password = bcrypt.generate_password_hash("ISawAButtonAndPressedIt").decode("utf-8")
+            password = bcrypt.generate_password_hash("ISawAButtonAndPressedIt").decode("utf-8"),
+            email = "Jim@Roci.net"
         ),
         User(
             username = "NaomiNagata",
-            password = bcrypt.generate_password_hash("FilipInaros").decode("utf-8")
+            password = bcrypt.generate_password_hash("FilipInaros").decode("utf-8"),
+            email = "Naomi@Roci.net"
         ),
         User(
             username = "AlexKamal",
-            password = bcrypt.generate_password_hash("DONKEYBALLS3").decode("utf-8")
+            password = bcrypt.generate_password_hash("DONKEYBALLS3").decode("utf-8"),
+            email = "Alex@Roci.net"
         ),
         User(
             username = "AmosBurton",
-            password = bcrypt.generate_password_hash("You could be both").decode("utf-8")
+            password = bcrypt.generate_password_hash("You could be both").decode("utf-8"),
+            email = "Timmy@Roci.net"
         ),
         User(
             username = "JasonAsano",
@@ -63,7 +67,8 @@ def seed():
         User(
             username = "Test_Administrator",
             password = bcrypt.generate_password_hash("Admin123").decode("utf-8"),
-            is_admin = True
+            is_admin = True,
+            email = "admin@admin.net"
         )
     ]
     db.session.add_all(users)
