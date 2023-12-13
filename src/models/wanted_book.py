@@ -23,8 +23,8 @@ class WantedBook(db.Model):
 # Users_Groups Schema
 class WantedBookSchema(ma.Schema):
     user = fields.Nested("UserSchema", exclude=["password", "is_admin"])
-    book = fields.Pluck("BookSchema", "title")
+    book = fields.Nested("BookSchema", only=["id", "title", "category", "series", "isbns", "authors"])
     quality = fields.String(validate=OneOf(QUALITIES))
     class Meta:
         ordered = True
-        fields = ("id", "user_id", "book_id", "quality", "user", "book")
+        fields = ("id", "user_id", "book_id", "quality", "user", "book", "quality")

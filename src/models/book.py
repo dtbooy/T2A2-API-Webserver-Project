@@ -4,11 +4,9 @@ from marshmallow import fields
 from marshmallow.validate import OneOf
 
 CATEGORIES = [
-    "art and music", "Australiana", "biography", "children's books", 
-    "computers", "cooking", "economics", "gardening", "fiction", 
-    "health", "history", "hobbies", "humour and religion", 
-    "languages other than English", "literature and classics", 
-    "philosophy", "reference", "science", "science fiction & fantasy", "sport", 
+    "art", "australiana", "biography", "children", "computers", "cooking", 
+    "gardening", "fantasy", "fiction", "health", "history", "hobbies", "humour", 
+    "literature", "philosophy", "reference", "scifi", "sport", 
     "travel"
     ]
 

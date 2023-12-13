@@ -46,8 +46,8 @@ def create_app():
         return {'error': e.description}, 400
     
     @app.errorhandler(DataError)
-    def Not_found_error(e):
-        return {'error': str(e)}, 404
+    def data_error(e):
+        return {'error': str(e)}, 400
     
     @app.errorhandler(IntegrityError)
     def integrity_error(e):
@@ -64,6 +64,11 @@ def create_app():
     @app.errorhandler(404)
     def Not_found_error(e):
         return {'error': e.description}, 404
+
+    @app.errorhandler(405)
+    def Method_not_allowed_error(e):
+        return {'error': e.description}, 405
+
 
     # print(app.url_map)
     return app

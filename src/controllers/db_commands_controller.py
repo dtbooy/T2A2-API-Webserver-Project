@@ -176,45 +176,45 @@ def seed():
 
     #6 Seed books 
     books = [
-        Book(title ="Game of Thrones", category ="Science Fiction & Fantasy", series ="A song of ice and fire"), #0
-        Book(title="A Clash of Kings", category="Science Fiction & Fantasy", series="A Song of Ice and Fire"),  #1
-        Book(title="A Storm of Swords", category="Science Fiction & Fantasy", series="A Song of Ice and Fire"), #2
-        Book(title="A Feast for Crows", category="Science Fiction & Fantasy", series="A Song of Ice and Fire"), #3
-        Book(title="A Dance with Dragons", category="Science Fiction & Fantasy", series="A Song of Ice and Fire"), #4
-        Book(title="The Fellowship of the Ring", category="Science Fiction & Fantasy", series="Lord of the Rings"), #5
-        Book(title="The Two Towers", category="Science Fiction & Fantasy", series="Lord of the Rings"), #6
-        Book(title="The Return of the King", category="Science Fiction & Fantasy", series="Lord of the Rings"), #7
-        Book(title="Do Androids Dream of Electric Sheep", category="Science Fiction & Fantasy"), #8 
-        Book(title="A Scanner Darkly", category="Science Fiction & Fantasy"), #9
-        Book(title="The Maker of Universes", category="Science Fiction & Fantasy", series="World of Tiers"), #10
-        Book(title="The Gates of Creation", category="Science Fiction & Fantasy", series="World of Tiers"), # 11
-        Book(title="A Private Cosmos", category="Science Fiction & Fantasy", series="World of Tiers"), #12
-        Book(title="Behind the Walls of Terra", category="Science Fiction & Fantasy", series="World of Tiers"), #13
-        Book(title="The Lavalite World", category="Science Fiction & Fantasy", series="World of Tiers"), #14
-        Book(title="Red Orc's Rage", category="Science Fiction & Fantasy", series="World of Tiers"), #15
-        Book(title="More Than Fire", category="Science Fiction & Fantasy", series="World of Tiers"), #16
-        Book(title="He Who Fights With Monsters", category="Science Fiction & Fantasy", series="He Who Fights With Monsters"), #17
-        #     category="Science Fiction & Fantasy", 
+        Book(title ="Game of Thrones", category ="fantasy", series ="A song of ice and fire"), #0
+        Book(title="A Clash of Kings", category="scifi", series="A Song of Ice and Fire"),  #1
+        Book(title="A Storm of Swords", category="scifi", series="A Song of Ice and Fire"), #2
+        Book(title="A Feast for Crows", category="scifi", series="A Song of Ice and Fire"), #3
+        Book(title="A Dance with Dragons", category="scifi", series="A Song of Ice and Fire"), #4
+        Book(title="The Fellowship of the Ring", category="fantasy", series="Lord of the Rings"), #5
+        Book(title="The Two Towers", category="fantasy", series="Lord of the Rings"), #6
+        Book(title="The Return of the King", category="fantasy", series="Lord of the Rings"), #7
+        Book(title="Do Androids Dream of Electric Sheep", category="scifi"), #8 
+        Book(title="A Scanner Darkly", category="scifi"), #9
+        Book(title="The Maker of Universes", category="scifi", series="World of Tiers"), #10
+        Book(title="The Gates of Creation", category="scifi", series="World of Tiers"), # 11
+        Book(title="A Private Cosmos", category="scifi", series="World of Tiers"), #12
+        Book(title="Behind the Walls of Terra", category="scifi", series="World of Tiers"), #13
+        Book(title="The Lavalite World", category="scifi", series="World of Tiers"), #14
+        Book(title="Red Orc's Rage", category="scifi", series="World of Tiers"), #15
+        Book(title="More Than Fire", category="scifi", series="World of Tiers"), #16
+        Book(title="He Who Fights With Monsters", category="fantasy", series="He Who Fights With Monsters"), #17
+        #     category="fantasy", 
         #     series=" "),
         # Book(
         #     title=" ", 
-        #     category="Science Fiction & Fantasy", 
+        #     category="fantasy", 
         #     series=" "),
         # Book(
         #     title=" ", 
-        #     category="Science Fiction & Fantasy", 
+        #     category="fantasy", 
         #     series=" "),
         # Book(
         #     title=" ", 
-        #     category="Science Fiction & Fantasy", 
+        #     category="fantasy", 
         #     series=" "),
         # Book(
         #     title=" ", 
-        #     category="Science Fiction & Fantasy", 
+        #     category="fantasy", 
         #     series=" "),
         # Book(
         #     title=" ", 
-        #     category="Science Fiction & Fantasy", 
+        #     category="fantasy", 
         #     series=" "),
     ]
 

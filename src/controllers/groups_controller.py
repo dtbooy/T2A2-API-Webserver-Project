@@ -1,7 +1,7 @@
 from app import db, bcrypt
 from models.group import Group, GroupSchema
 from models.user_group import UserGroup, UserGroupSchema
-from models.user import User
+from models.user import User, UserSchema
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask import Blueprint, request, abort
 from datetime import timedelta
@@ -160,7 +160,7 @@ def join_group(group_id):
     return GroupSchema(exclude=["password"]).dump(group)
 
 # ADD MEMBER
-@groups.route("/<int:group_id>/users/<user_id>", methods=["POST"])
+@groups.route("/<int:group_id>/members/<user_id>", methods=["POST"])
 @jwt_required()
 def add_member(group_id, user_id):
 
@@ -199,9 +199,8 @@ def add_member(group_id, user_id):
     group = db.session.scalar(stmt)
     return GroupSchema(exclude=["password"]).dump(group)
 
-
 # REMOVE GROUP MEMBER
-@groups.route("/<int:group_id>/users/<int:user_id>", methods=["DELETE"])
+@groups.route("/<int:group_id>/members/<int:user_id>", methods=["DELETE"])
 @jwt_required()
 def delete_member(group_id, user_id):
     # Only administrator or user can remove user from group
@@ -229,3 +228,18 @@ def delete_member(group_id, user_id):
 
     # Return empty body & 204 No Content response to confirm delete
     return {}, 204
+
+from models.wanted_book import WantedBook
+
+# GET ALL BOOKS GROUP USERS WANT
+@groups.route("/<int:group_id>/wants", methods=["GET"])
+@jwt_required()
+def get_group_books(group_id):
+    # Only members can see booklist
+    is_group_or_admin(group_id)
+    # output wanted_books where User_id in (user_groups.userid (where usergroup == group)
+    stmt = db.select(User).join(UserGroup).join(Group).where(Group.id == group_id)
+    users = db.session.scalars(stmt)
+    print(stmt)
+    return UserSchema(only =["username", "wanted_books"], many=True).dump(users)
+    # id
