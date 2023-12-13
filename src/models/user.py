@@ -14,7 +14,7 @@ class User(db.Model):
     # Relationships
     groups = db.relationship("UserGroup", back_populates="user", cascade="all, delete-orphan")
     owned_books = db.relationship("UserBook", back_populates="user", cascade="all, delete-orphan")
-    users_wishlists = db.relationship("UserWishlist", back_populates="user", cascade="all, delete-orphan")
+    wanted_books = db.relationship("WantedBook", back_populates="user", cascade="all, delete-orphan")
 
 class UserSchema(ma.Schema):
     groups = fields.Pluck("UserGroupSchema", "group", many=True)

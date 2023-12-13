@@ -26,7 +26,7 @@ class Book(db.Model):
     book_authors = db.relationship("BookAuthor", back_populates="book", cascade="all, delete-orphan")
     isbns = db.relationship("Isbn", back_populates="book", cascade="all, delete-orphan")
     users_books = db.relationship("UserBook", back_populates="book", cascade="all, delete-orphan")
-    users_wishlists = db.relationship("UserWishlist", back_populates="book", cascade="all, delete-orphan")
+    wanted_books = db.relationship("WantedBook", back_populates="book", cascade="all, delete-orphan")
 
 class BookSchema(ma.Schema):
     class Meta:

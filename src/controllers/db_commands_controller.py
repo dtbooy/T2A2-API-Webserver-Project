@@ -6,7 +6,7 @@ from models.author import Author, AuthorSchema
 from models.isbn import Isbn, IsbnSchema
 from models.user_book import UserBook, UserBookSchema
 from models.user_group import UserGroup, UserGroupSchema
-from models.user_wishlist import UserWishlist, UserWishlistSchema
+from models.wanted_book import WantedBook, WantedBookSchema
 from models.user import User, UserSchema
 from models.book import Book, BookSchema
 from models.book_author import BookAuthor, BookAuthorSchema 
@@ -287,13 +287,13 @@ def seed():
     db.session.add_all(bookshelf)
     db.session.commit()
 
-    # #9 Seed users_wishlist (join table - Wish list)
-    wishlists_dict = {0 : [2, 5, 6, 8], 1 : [10,11,12,13,14,15], 2 : [0,1,2,3,4], 3 : [5,6,7], 4 :[0,1,2,4], 5: [10,12,13], 6 : [0,2,3,4], 7:[1,2]}
-    users_wishlists = []
-    for k, v in wishlists_dict.items():
+    # #9 Seed wanted_books (join table - user-books)
+    wantedbooks_dict = {0 : [2, 5, 6, 8], 1 : [10,11,12,13,14,15], 2 : [0,1,2,3,4], 3 : [5,6,7], 4 :[0,1,2,4], 5: [10,12,13], 6 : [0,2,3,4], 7:[1,2]}
+    wanted_books = []
+    for k, v in wantedbooks_dict.items():
         for value in v:
-            users_wishlists.append(UserWishlist(user_id = users[k].id, book_id = books[value].id))
+            wanted_books.append(WantedBook(user_id = users[k].id, book_id = books[value].id))
    
-    db.session.add_all(users_wishlists)
+    db.session.add_all(wanted_books)
     db.session.commit()
     print("Tables Seeded")

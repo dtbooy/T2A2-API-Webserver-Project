@@ -5,9 +5,9 @@ from marshmallow.validate import OneOf
 QUALITIES = ["any", "fair", "good", "mint"]
 
 # users_groups table Model
-class UserWishlist(db.Model):
+class WantedBook(db.Model):
     # Table name
-    __tablename__ = 'users_wishlists'
+    __tablename__ = 'wantedbooks'
     # Attributes
     id = db.Column(db.Integer, primary_key=True)
     quality = db.Column(db.String, default="any")
@@ -17,11 +17,11 @@ class UserWishlist(db.Model):
     book_id = db.Column(db.Integer, db.ForeignKey(
         "books.id"), nullable=False)
     # Relationships
-    user = db.relationship("User", back_populates="users_wishlists")
-    book = db.relationship("Book", back_populates="users_wishlists")
+    user = db.relationship("User", back_populates="wanted_books")
+    book = db.relationship("Book", back_populates="wanted_books")
 
 # Users_Groups Schema
-class UserWishlistSchema(ma.Schema):
+class WantedBookSchema(ma.Schema):
     user = fields.Nested("UserSchema", exclude=["password", "is_admin"])
     book = fields.Pluck("BookSchema", "title")
     quality = fields.String(validate=OneOf(QUALITIES))
