@@ -2,10 +2,11 @@ from app import db, bcrypt
 from models.user import User, UserSchema
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask import Blueprint, request, abort
-from datetime import timedelta
+from controllers.owned_books_controller import owned_books
 from controllers.auth_controller import is_admin, is_user_or_admin
 
 users = Blueprint("users", __name__, url_prefix="/users")
+users.register_blueprint(owned_books)
 
 # READ: ALL USERS
 @users.route("/", methods=["GET"])
@@ -17,7 +18,7 @@ def get_users():
     stmt = db.select(User)
     users = db.session.scalars(stmt)
     # exclude password hash in json Return
-    return UserSchema(many=True, exclude=["password"]).dump(users)
+    return UserSchema(many=True, exclude=["password", "owned_books"]).dump(users)
 
 # READ: SINGLE USER
 @users.route("/<int:user_id>", methods=["GET"])
@@ -28,9 +29,8 @@ def get_user(user_id):
     # Database query: return user with user_id
     stmt = db.select(User).filter_by(id=user_id)
     user = db.session.scalar(stmt)
-
     # exclude password hash in json Return
-    return UserSchema(exclude=["password"]).dump(user)
+    return UserSchema(exclude=["password", "owned_books", "is_admin"]).dump(user)
 
 # UPDATE: USER
 @users.route("/<int:user_id>", methods=["PATCH", "PUT"])
@@ -45,14 +45,14 @@ def update_user(user_id):
     if not user:
         return {"Error": "User not found"}, 404
     # validate updated user info through schema 
-    user_info = UserSchema(exclude=["username", "id", "is_admin"]).load(request.json)
+    user_info = UserSchema(exclude=["username", "id", "is_admin", "owned_books"]).load(request.json)
     
     user.email = user_info.get('email', user.email)
     if user_info.get('password', None):
         user.password = bcrypt.generate_password_hash(user_info['password'])
 
     # exclude password hash in json return
-    return UserSchema(exclude=["password"]).dump(user), 200
+    return UserSchema(exclude=["password", "owned_books"]).dump(user), 200
 
 # DELETE: SINGLE USER
 @users.route("/<int:user_id>", methods=["DELETE"])

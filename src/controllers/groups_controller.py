@@ -92,7 +92,7 @@ def delete_group(group_id):
     # return empty body & 204 No Content response to confirm delete
     return {}, 204
 
-
+# UPDATE GROUP
 @groups.route("/<int:group_id>", methods=["PATCH", "PUT"])
 @jwt_required()
 def update_group(group_id):

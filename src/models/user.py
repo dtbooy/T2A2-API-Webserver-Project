@@ -13,12 +13,13 @@ class User(db.Model):
 
     # Relationships
     groups = db.relationship("UserGroup", back_populates="user", cascade="all, delete-orphan")
-    users_books = db.relationship("UserBook", back_populates="user", cascade="all, delete-orphan")
+    owned_books = db.relationship("UserBook", back_populates="user", cascade="all, delete-orphan")
     users_wishlists = db.relationship("UserWishlist", back_populates="user", cascade="all, delete-orphan")
 
 class UserSchema(ma.Schema):
     groups = fields.Pluck("UserGroupSchema", "group", many=True)
     password = fields.String(validate=Length(min=6)) 
+    owned_books = fields.Nested("UserBookSchema", many=True, only=["book"])
     class Meta:
         ordered = True
-        fields = ('id', 'username', 'password', "email", "is_admin", "groups")
+        fields = ('id', 'username', 'password', "email", "is_admin", "groups", "owned_books")

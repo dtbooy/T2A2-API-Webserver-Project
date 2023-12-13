@@ -13,7 +13,7 @@ class UserBook(db.Model):
     book_id = db.Column(db.Integer, db.ForeignKey(
         "books.id"), nullable=False)
     # Relationships
-    user = db.relationship("User", back_populates="users_books")
+    user = db.relationship("User", back_populates="owned_books")
     book = db.relationship("Book", back_populates="users_books")
 
 # Users_Groups Schema
@@ -22,4 +22,4 @@ class UserBookSchema(ma.Schema):
     book = fields.Pluck("BookSchema", "title")
     class Meta:
         ordered = True
-        fields = ('id', 'user_id', 'book_id')
+        fields = ('id', 'user_id', 'book_id', "user", "book")
