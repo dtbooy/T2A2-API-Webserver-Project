@@ -78,6 +78,7 @@ def get_book(book_id):
     # Check book exists
     if not book:
         return {"Error": "Book not found"}, 404
+    #print(book.authors) #--------------------------------------------------->DEBUG
     return BookSchema().dump(book), 200
 
 # UPDATE: Book

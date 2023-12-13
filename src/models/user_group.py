@@ -16,7 +16,7 @@ class UserGroup(db.Model):
 
 # Users_Groups Schema
 class UserGroupSchema(ma.Schema):
-    user = fields.Nested("UserSchema", exclude=["password", "is_admin"])
+    user = fields.Nested("UserSchema", only=["id", "username"])
     group = fields.Pluck("GroupSchema", "name")
     class Meta:
         ordered = True

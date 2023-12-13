@@ -72,19 +72,22 @@ def seed():
         )
     ]
     db.session.add_all(users)
-
+    db.session.commit()
     #2 Seed Groups
     # HWFWM open group - no password required to join
     # Rocinante - password protected group
     groups = [
         Group(
             name = "rocinante",
-            password = bcrypt.generate_password_hash("NoLongerAWorkHorse").decode("utf-8")
+            password = bcrypt.generate_password_hash("NoLongerAWorkHorse").decode("utf-8"),
+            admin_id = users[0].id
         ),
         Group(
-            name = "HWFWM"
+            name = "HWFWM",
+            admin_id = users[4].id
         )
     ]
+
     db.session.add_all(groups)
     db.session.commit()
 

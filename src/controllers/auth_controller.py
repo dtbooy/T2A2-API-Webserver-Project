@@ -33,11 +33,6 @@ def auth_register():
     # Required fields = [username, password]
     user_info = UserSchema(only=["username", "password", "email"]).load(request.json)
     
-    # Check adequate password length -------------------------------------------------------------------------------------------------> DEBUG MARSHMALLOW Shoulod do this automatically
-    if len(user_info["password"]) <= 6:
-        # return a bad request Status Code 
-        return {"Error": "Password must be at least 6 characters"}, 400
-    
     # check if user exists
     stmt = db.select(User).where(User.username==user_info["username"])
     user = db.session.scalar(stmt)

@@ -10,12 +10,15 @@ class Group(db.Model):
     # Attributes
     name = db.Column(db.String, nullable=False)
     password = db.Column(db.String)
+    admin_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     # Relationships
     users = db.relationship("UserGroup", back_populates="group", cascade="all, delete-orphan")
+    # admin = db.relationship("")
 
 class GroupSchema(ma.Schema):
     users = fields.Pluck("UserGroupSchema", "user", many=True)
+
     class Meta:
         ordered = True
-        fields = ("id", "name", "password", "users")
-        load_only = ("password")
+        fields = ("id", "name", "users", "password")
+
