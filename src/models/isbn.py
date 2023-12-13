@@ -1,5 +1,6 @@
 from app import db, ma
 from marshmallow import fields
+from marshmallow.validate import Length
 
 # ISBN table model
 class Isbn(db.Model):
@@ -16,6 +17,7 @@ class Isbn(db.Model):
 
 class IsbnSchema(ma.Schema):
     book = fields.Nested("BookSchema", exclude=["isbns"])
+    isbn = fields.String(validate=Length(max=13)) 
     class Meta:
         ordered = True
         fields = ("isbn", "book_id", "book")

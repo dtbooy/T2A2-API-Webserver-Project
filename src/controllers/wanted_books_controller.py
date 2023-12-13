@@ -1,5 +1,5 @@
 from app import db, bcrypt
-from models.book import Book, BookSchema
+from models.book import Book, BookSchema, CATEGORIES
 from models.wanted_book import WantedBook, WantedBookSchema
 from models.user import User, UserSchema
 from flask_jwt_extended import jwt_required 
@@ -17,9 +17,6 @@ def get_wishlist(user_id):
     # DB search for user with user_id
     stmt = db.select(User).where(User.id == user_id)
     user = db.session.scalar(stmt)
-    # # Return error if user not in database  --------------------> this is done by is_user_or_admin()
-    # if not user:
-    #     return {"error": "User not found"}, 400
     return UserSchema(only=["wanted_books"]).dump(user), 201
 
 # CREATE: ADD WANTED BOOK
@@ -28,7 +25,7 @@ def get_wishlist(user_id):
 def add_wanted_book(user_id):
     # Verify user credentials - only user can add books to owned books
     is_user_or_admin(user_id)
-    # input data required = [book_id]
+    # input data required = [book_id] optional data = [quality]
     # Load book data through schema
     book_info = WantedBookSchema(exclude=["id"]).load(request.json)
     # DB Search for book with book_id
@@ -40,12 +37,13 @@ def add_wanted_book(user_id):
     # Add book to owned books register
     book_entry = WantedBook(
         book_id = book.id,
-        user_id = user_id
+        user_id = user_id,
+        quality = book.get("quality", "any")
     )
     db.session.add(book_entry)
     db.session.commit()
 
-    return WantedBookSchema().dump(book_entry), 201
+    return WantedBookSchema(["book", "quality"]).dump(book_entry), 201
 
 # DELETE BOOK FROM USER WANTED BOOKS
 @wanted_books.route("/<book_id>", methods=["DELETE"])
@@ -58,6 +56,16 @@ def remove_wanted_book(user_id, book_id):
     book_entry = db.session.scalar(stmt)
     # Return error if book not in database
     if not book_entry:
-         return {"error": "Book not in users owned-books"}, 404
+        abort(404, "Book not in users owned-books")
     db.session.delete(book_entry)
     db.session.commit()
+
+# RETURN BOOKS FROM <SECTION>
+@wanted_books.route("/categories/<category>", methods=["GET"])
+@jwt_required()
+def get_wanted_book_category(user_id, category):
+    # check valid category
+    if not category in CATEGORIES:
+        abort(400, f"Invalid category. Valid categories are: {CATEGORIES}")
+    
+    

@@ -4,7 +4,7 @@ from marshmallow import fields
 # users_groups table Model
 class UserBook(db.Model):
     # Table name
-    __tablename__ = 'users_books'
+    __tablename__ = "users_books"
     # Attributes
     id = db.Column(db.Integer, primary_key=True)
     # FKs
@@ -22,4 +22,4 @@ class UserBookSchema(ma.Schema):
     book = fields.Pluck("BookSchema", "title")
     class Meta:
         ordered = True
-        fields = ('id', 'user_id', 'book_id', "user", "book")
+        fields = ("id", "user_id", "book_id", "user", "book")

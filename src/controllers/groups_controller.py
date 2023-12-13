@@ -117,12 +117,12 @@ def update_group(group_id):
         # Return Error if group name taken
         if group_name:
             return {"Error": "Group exists with that name"}, 400
-        group.name = group_info.get('name', group.name) 
+        group.name = group_info.get("name", group.name) 
     
-    group.admin_id = group_info.get('group_admin', group.admin_id)# ----------------------------- > NEED TO VALIDATE ADMIN ID EXISTS
+    group.admin_id = group_info.get("group_admin", group.admin_id)# ----------------------------- > NEED TO VALIDATE ADMIN ID EXISTS
     # update password
-    if group_info.get('password', None):
-        group.password = bcrypt.generate_password_hash(group_info['password'])
+    if group_info.get("password", None):
+        group.password = bcrypt.generate_password_hash(group_info["password"])
 
     # exclude password hash in json return
     return GroupSchema(exclude=["password"]).dump(group), 200

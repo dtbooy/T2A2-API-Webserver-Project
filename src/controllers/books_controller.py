@@ -14,14 +14,12 @@ books = Blueprint("books", __name__, url_prefix="/books")
 def create_book():
     # Book data required = [Title, ISBN(at least 1), author_ids, category, ]
     # Optional Book data = [series]
-    # Extract other table columns
-    isbn_info, author_ids = [request.json.pop("isbns"), request.json.pop("author_ids", None)]
-
-    # check if book exists
-    stmt = db.select(Isbn).where(Isbn.isbn.in_(isbn_info))
-    isbn_exists = db.session.scalars(stmt).first()
-    if isbn_exists:
-         return {"error": "Book exists with provided ISBN", "Book details" : IsbnSchema().dump(isbn_exists)}, 400
+    # Extract other table columns (no author or isbn will cause key error)
+    isbn_info, author_ids = [request.json.pop("isbns"), request.json.pop("author_ids")]
+    
+    # Validate inputs
+    validate_isbns(isbn_info)
+    validate_authors(author_ids)
 
     # Add data to book table
     book_info = BookSchema(exclude=["id"]).load(request.json)
@@ -46,6 +44,7 @@ def create_book():
     # Add ISBNs to ISBN table
     book_isbns = []
     for i in isbn_info:
+
         book_isbns.append(
             Isbn(
                 isbn = i,
@@ -78,7 +77,6 @@ def get_book(book_id):
     # Check book exists
     if not book:
         return {"Error": "Book not found"}, 404
-    #print(book.authors) #--------------------------------------------------->DEBUG
     return BookSchema().dump(book), 200
 
 # UPDATE: Book
@@ -160,3 +158,25 @@ def delete_book(book_id):
     db.session.commit()
     # return empty body & 204 No Content response
     return {}, 204
+
+# data validation functions
+
+def validate_isbns(isbn_info):
+    # check all isbns are valid 
+    if not isinstance(isbn_info, list):
+        return {"error": "Invaild format. ISBN input data must be an array / list"}
+
+    for test_isbn in isbn_info:
+        if len(test_isbn) > 13:
+            return {"error": f"Invaild ISBN ({test_isbn}), ISBN must be max 13 characters"}
+    # DB Search: find any isbns that match those provided 
+    # if any exist in the database the book is already added
+    stmt = db.select(Isbn).where(Isbn.isbn.in_(isbn_info))
+    isbn_exists = db.session.scalars(stmt).first()
+    if isbn_exists:
+         return {"error": "Book exists with provided ISBN", "Existing Book details" : IsbnSchema().dump(isbn_exists)}, 400
+
+def validate_authors(author_ids):
+    if not isinstance(author_ids, list):
+        return {"error": "Invaild format. author_ids input data must be an array / list"}
+    

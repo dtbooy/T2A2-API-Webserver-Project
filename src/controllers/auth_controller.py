@@ -60,7 +60,7 @@ def is_admin():
     user = db.session.scalar(stmt)
     # If user does not exist or is not an administrator, abort
     if not user or not user.is_admin:
-        abort(403, description="Unauthorised: Admin privilages required to perform this action")
+        abort(403, description="Unauthorised - Admin privilages required to perform this action")
 
 # CHECK IF USER IS ADMIN OR ACCESSING OWN DATA
 def is_user_or_admin(id):
@@ -68,6 +68,7 @@ def is_user_or_admin(id):
     # Database query: return user with the user id stored in auth_id
     stmt = db.select(User).filter_by(id=auth_id)
     user = db.session.scalar(stmt)
+    print(user)
     #Make sure it is in the database
     if not user or not (auth_id == id or user.is_admin):
         abort(403, description="Unauthorised: Access denied")

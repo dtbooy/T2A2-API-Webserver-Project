@@ -45,7 +45,7 @@ def add_book(user_id):
     db.session.add(book_entry)
     db.session.commit()
 
-    return UserBookSchema().dump(book_entry), 201
+    return UserBookSchema(only="book").dump(book_entry), 201
 
 # DELETE BOOK FROM USER OWNED BOOKS
 @owned_books.route("/<book_id>", methods=["DELETE"])

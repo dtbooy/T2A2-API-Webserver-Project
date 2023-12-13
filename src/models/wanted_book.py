@@ -7,7 +7,7 @@ QUALITIES = ["any", "fair", "good", "mint"]
 # users_groups table Model
 class WantedBook(db.Model):
     # Table name
-    __tablename__ = 'wantedbooks'
+    __tablename__ = "wantedbooks"
     # Attributes
     id = db.Column(db.Integer, primary_key=True)
     quality = db.Column(db.String, default="any")
@@ -27,4 +27,4 @@ class WantedBookSchema(ma.Schema):
     quality = fields.String(validate=OneOf(QUALITIES))
     class Meta:
         ordered = True
-        fields = ('id', 'user_id', 'book_id')
+        fields = ("id", "user_id", "book_id", "quality", "user", "book")
