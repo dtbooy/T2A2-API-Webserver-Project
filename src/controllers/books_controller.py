@@ -1,6 +1,7 @@
 from app import db, bcrypt
 from models.book import Book, BookSchema
 from models.book_author import BookAuthor, BookAuthorSchema
+from models.author import Author
 from models.isbn import Isbn, IsbnSchema
 from flask_jwt_extended import jwt_required 
 from flask import Blueprint, request, abort
@@ -63,7 +64,6 @@ def get_books():
     is_admin()
     # Database query: return all books
     stmt = db.select(Book)
-    print(stmt)
     books = db.session.scalars(stmt)
     return BookSchema(many=True).dump(books), 200
 
@@ -85,17 +85,21 @@ def get_book(book_id):
 def update_books(book_id):
     # Only administrator can edit book details
     is_admin()
+
+    # Validate input data
     # Database query: return book with book_id
     stmt = db.select(Book).filter_by(id=book_id)
     book = db.session.scalar(stmt)
     # Check book exists
     if not book:
         return {"Error": "Book not found"}, 404
-    
     # Extract related table data from request
-    isbn_info, author_ids = [request.json.pop("isbns", None), request.json.pop("author_ids", None)]    
+    isbn_info, author_ids = [request.json.pop("isbns", None), request.json.pop("author_ids", None)]
+    validate_isbns(isbn_info, book_id=None)
+    validate_authors(author_ids)
     # validate updated book info through schema 
     book_info = BookSchema(exclude=["id"]).load(request.json)
+
     # Update book elements
     book.title = book_info.get("title", book.title)
     book.category = book_info.get("category", book.category)
@@ -161,22 +165,28 @@ def delete_book(book_id):
 
 # data validation functions
 
-def validate_isbns(isbn_info):
+def validate_isbns(isbn_info, book_id=None):
     # check all isbns are valid 
     if not isinstance(isbn_info, list):
-        return {"error": "Invaild format. ISBN input data must be an array / list"}
+        abort(400, "Invaild format. ISBN input data must be an array / list")
 
     for test_isbn in isbn_info:
         if len(test_isbn) > 13:
-            return {"error": f"Invaild ISBN ({test_isbn}), ISBN must be max 13 characters"}
+            abort(400, f"Invaild ISBN ({test_isbn}), ISBN must be max 13 characters")
     # DB Search: find any isbns that match those provided 
     # if any exist in the database the book is already added
-    stmt = db.select(Isbn).where(Isbn.isbn.in_(isbn_info))
+    stmt = db.select(Isbn).where(Isbn.isbn.in_(isbn_info), Isbn.book_id != book_id)
     isbn_exists = db.session.scalars(stmt).first()
     if isbn_exists:
-         return {"error": "Book exists with provided ISBN", "Existing Book details" : IsbnSchema().dump(isbn_exists)}, 400
+         abort(400, f"Book exists with provided ISBN")
 
 def validate_authors(author_ids):
     if not isinstance(author_ids, list):
-        return {"error": "Invaild format. author_ids input data must be an array / list"}
+        abort(400, "Invaild format. author_ids input data must be an array / list")
+    for author in  author_ids:
+        stmt = db.select(Author).where(Author.id == author)
+        author_exists = db.session.scalar(stmt)
+        if not author_exists:
+            abort(404, f"Author id {author} not found")
+                
     
