@@ -3,6 +3,7 @@ from controllers.groups_controller import groups
 from controllers.books_controller import books
 from controllers.auth_controller import auth
 from controllers.db_commands_controller import db_commands
+from controllers.authors_controller import authors
 
 
 registerable_controllers = [
@@ -11,4 +12,5 @@ registerable_controllers = [
     books,
     groups,
     db_commands,
+    authors,
 ]
