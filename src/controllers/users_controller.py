@@ -20,7 +20,7 @@ def get_users():
     stmt = db.select(User)
     users = db.session.scalars(stmt)
     # exclude password hash in json Return
-    return UserSchema(many=True, exclude=["password", "owned_books"]).dump(users)
+    return UserSchema(many=True, only=["id", "username", "email", "groups"]).dump(users)
 
 # READ: SINGLE USER
 @users.route("/<int:user_id>", methods=["GET"])
@@ -34,7 +34,7 @@ def get_user(user_id):
     # exclude password hash in json Return
     if not user:
         abort(404, "user does not exist")
-    return UserSchema(exclude=["password", "owned_books", "is_admin"]).dump(user)
+    return UserSchema(only=["id", "username", "email", "groups"]).dump(user)
 
 # UPDATE: USER
 @users.route("/<int:user_id>", methods=["PATCH", "PUT"])
@@ -49,14 +49,14 @@ def update_user(user_id):
     if not user:
         return {"Error": "User not found"}, 404
     # validate updated user info through schema 
-    user_info = UserSchema(exclude=["username", "id", "is_admin", "owned_books"]).load(request.json)
+    user_info = UserSchema(only=["password", "email"]).load(request.json)
     
     user.email = user_info.get("email", user.email)
     if user_info.get("password", None):
         user.password = bcrypt.generate_password_hash(user_info["password"])
 
     # exclude password hash in json return
-    return UserSchema(exclude=["password", "owned_books"]).dump(user), 200
+    return UserSchema(only=["id", "username", "email"]).dump(user), 200
 
 # DELETE: SINGLE USER
 @users.route("/<int:user_id>", methods=["DELETE"])

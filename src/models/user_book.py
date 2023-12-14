@@ -19,7 +19,7 @@ class UserBook(db.Model):
 # Users_Groups Schema
 class UserBookSchema(ma.Schema):
     user = fields.Nested("UserSchema", exclude=["password", "is_admin"])
-    book = fields.Pluck("BookSchema", "title")
+    book = fields.Nested("BookSchema")
     class Meta:
         ordered = True
         fields = ("id", "user_id", "book_id", "user", "book")

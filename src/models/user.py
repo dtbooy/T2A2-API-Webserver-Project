@@ -19,7 +19,7 @@ class User(db.Model):
 class UserSchema(ma.Schema):
     groups = fields.Pluck("UserGroupSchema", "group", many=True)
     password = fields.String(validate=Length(min=6)) 
-    owned_books = fields.Nested("UserBookSchema", many=True, only=["book"])
+    owned_books = fields.Pluck("UserBookSchema", "book", many=True)
     wanted_books = fields.Nested("WantedBookSchema", only=["book","quality"], many=True)
     class Meta:
         ordered = True

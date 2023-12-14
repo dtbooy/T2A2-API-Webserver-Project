@@ -29,7 +29,7 @@ def create_book():
     new_book.category = book_info["category"]
     new_book.series = book_info.get("series", None)
     db.session.add(new_book)
-    db.session.commit()
+    db.session.flush()
 
     # Add book & author ids to book_author table 
     authors =[]
@@ -104,7 +104,7 @@ def update_books(book_id):
     book.title = book_info.get("title", book.title)
     book.category = book_info.get("category", book.category)
     book.series = book_info.get("series", book.series)
-    db.session.commit()
+    db.session.flush()
 
     # Update ISBNs if provided
     if isbn_info:
@@ -113,7 +113,7 @@ def update_books(book_id):
         isbns = db.session.scalars(stmt).all()
         for i in isbns:
             db.session.delete(i)
-        db.session.commit()
+        db.session.flush()
         # Add new ISBNs to ISBN table
         book_isbns = []
         for i in isbn_info:
@@ -123,7 +123,7 @@ def update_books(book_id):
                     book_id = book.id
             ))
         db.session.add_all(book_isbns)
-        db.session.commit()
+        db.session.flush()
 
     # Update Book_Authors if provided
     if author_ids:
@@ -131,7 +131,7 @@ def update_books(book_id):
         rm_works = db.session.scalars(rm_stmt).all()
         for work in rm_works:
             db.session.delete(work)
-        db.session.commit()
+        db.session.flush()
         # Add book & author ids to book_author table 
         authors =[]
         for a in author_ids:

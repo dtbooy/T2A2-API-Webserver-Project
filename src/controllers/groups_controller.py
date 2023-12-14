@@ -58,9 +58,9 @@ def create_group():
     else:
         return {"Error": "Invalid user ID: admin_id"}, 400
 
-    # Add new Group to session and commit to db
+    # Add new Group to session and flush
     db.session.add(group)
-    db.session.commit()
+    db.session.flush()
 
     # Add group creator as member of new group
     member = UserGroup(
@@ -160,7 +160,7 @@ def join_group(group_id):
     return GroupSchema(exclude=["password"]).dump(group)
 
 # ADD MEMBER
-@groups.route("/<int:group_id>/members/<user_id>", methods=["POST"])
+@groups.route("/<int:group_id>/members/<int:user_id>", methods=["POST"])
 @jwt_required()
 def add_member(group_id, user_id):
 

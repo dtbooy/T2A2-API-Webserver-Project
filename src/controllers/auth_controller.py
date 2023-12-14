@@ -22,7 +22,7 @@ def auth_login():
         return {"Error": "Username or password invalid"}, 401
 
     # Create JWT token for user session
-    token = create_access_token(user.id, expires_delta=timedelta(hours=10000))
+    token = create_access_token(user.id, expires_delta=timedelta(hours=1))
     return {"Username" : user.username, "Token" : token}, 200
 
 # CREATE USER
@@ -68,17 +68,16 @@ def is_user_or_admin(id):
     # Database query: return user with the user id stored in auth_id
     stmt = db.select(User).filter_by(id=auth_id)
     user = db.session.scalar(stmt)
-    print(user)
     #Make sure it is in the database
     if not user or not (auth_id == id or user.is_admin):
         abort(403, description="Unauthorised: Access denied")
 
 def is_group_or_admin(group_id):
     # Database query: return user with the user id stored in auth_id
-    stmt = db.select(User).filter_by(id=get_jwt_identity())
+    stmt = db.select(User).where(User.id == get_jwt_identity(), User.is_admin == True)
     user = db.session.scalar(stmt)
-    stmt = db.select(UserGroup).where(UserGroup.group_id == group_id, UserGroup.user_id == user.id)
+    stmt = db.select(UserGroup).where(UserGroup.group_id == group_id, UserGroup.user_id == get_jwt_identity())
     member = db.session.scalar(stmt)
     #Make sure it is in the database
-    if not member and not user.is_admin:
+    if not member and not user:
         abort(403, description="Unauthorised: Access denied")

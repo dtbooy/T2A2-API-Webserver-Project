@@ -72,7 +72,7 @@ def seed():
         )
     ]
     db.session.add_all(users)
-    db.session.commit()
+    db.session.flush()
     #2 Seed Groups
     # HWFWM open group - no password required to join
     # Rocinante - password protected group
@@ -89,7 +89,7 @@ def seed():
     ]
 
     db.session.add_all(groups)
-    db.session.commit()
+    db.session.flush()
 
     #3 Seed User_groups (Join table)
     # Expanse characters in the Rocinante group
@@ -132,7 +132,7 @@ def seed():
         ),
     ]
     db.session.add_all(user_groups)
-    db.session.commit()
+    db.session.flush()
     #4 Seed authors
     authors = [
         Author(
@@ -169,10 +169,14 @@ def seed():
         Author(
             surname = "Gaiman",
             given_names = "Neil"
+        ),
+        Author(
+            surname = "Thompson",
+            given_names = "Hunter S"
         )
     ]
     db.session.add_all(authors)
-    db.session.commit()
+    db.session.flush()
 
     #6 Seed books 
     books = [
@@ -194,6 +198,7 @@ def seed():
         Book(title="Red Orc's Rage", category="scifi", series="World of Tiers"), #15
         Book(title="More Than Fire", category="scifi", series="World of Tiers"), #16
         Book(title="He Who Fights With Monsters", category="fantasy", series="He Who Fights With Monsters"), #17
+        Book(title="Fear and Loathing in Las Vegas", category="fiction"), #18
         #     category="fantasy", 
         #     series=" "),
         # Book(
@@ -219,7 +224,7 @@ def seed():
     ]
 
     db.session.add_all(books)
-    db.session.commit()
+    db.session.flush()
      
 
     #6 Seed ISBNs
@@ -242,7 +247,7 @@ def seed():
         15 : ["9780312850364", "9780812508901"],
         16 : ["9780575119659", "9780312852801", "0312852800"],
         17 : ["9798712811786", "9789798712814"],
-        18 : [],
+        18 : ["000655136X"],
         19 : [],
         20 : [],
         21 : [],
@@ -260,32 +265,32 @@ def seed():
         for value in v:
             isbns.append(
                 Isbn(
-                    isbn = int(value),
+                    isbn = value,
                     book_id = books[k].id
             ))
 
     db.session.add_all(isbns)
-    db.session.commit()
+    db.session.flush()
 
 
     #7 Seed book_author (book_authors join table)
-    book_authors_dict = {0 : [0,1,2,3,4], 1 : [5,6,7], 2 : [8,9,7], 3 : [10,11,12,13,14,15,16], 5: [17], 6 : [17]}
+    book_authors_dict = {0 : [0,1,2,3,4], 1 : [5,6,7], 2 : [8,9,7], 3 : [10,11,12,13,14,15,16], 5: [17], 6 : [17], 9 : [18]}
     book_authors = []
     for k, v in book_authors_dict.items():
         for value in v:
             book_authors.append(BookAuthor(author_id = authors[k].id, book_id = books[value].id ))
    
     db.session.add_all(book_authors)
-    db.session.commit()
+    db.session.flush()
     #8 Seed users_books (join Table - Bookshelf)
-    bookshelf_dict = {0 : [0,1,3,4,7,9,12], 1 : [0,5,6,7,16], 2 : [], 3 : [10,11,12,13,14,15,16], 4 :[12,5,3,6,7], 5: [11], 6 : [1], 7:[0]}
+    bookshelf_dict = {0 : [0,1,3,4,7,9,12,18], 1 : [0,5,6,7,16], 2 : [], 3 : [10,11,12,13,14,15,16], 4 :[12,5,3,6,7,18], 5: [11], 6 : [1], 7:[0]}
     bookshelf = []
     for k, v in bookshelf_dict.items():
         for value in v:
             bookshelf.append(UserBook(user_id = users[k].id, book_id = books[value].id ))
    
     db.session.add_all(bookshelf)
-    db.session.commit()
+    db.session.flush()
 
     # #9 Seed wanted_books (join table - user-books)
     wantedbooks_dict = {0 : [2, 5, 6, 8], 1 : [10,11,12,13,14,15], 2 : [0,1,2,3,4], 3 : [5,6,7], 4 :[0,1,2,4], 5: [10,12,13], 6 : [0,2,3,4], 7:[1,2]}
