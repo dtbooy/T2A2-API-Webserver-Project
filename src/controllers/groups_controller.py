@@ -5,7 +5,7 @@ from models.user import User, UserSchema
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask import Blueprint, request, abort
 from datetime import timedelta
-from controllers.auth_controller import is_admin, is_group_or_admin, is_user_or_admin
+from controllers.auth_controller import is_admin, is_group_or_admin, is_user_or_admin, is_user_group_admin_or_admin
 
 groups = Blueprint("groups", __name__, url_prefix="/groups")
 
@@ -29,6 +29,8 @@ def get_group(group_id):
     # Database query: return group with group_id
     stmt = db.select(Group).filter_by(id=group_id)
     group = db.session.scalar(stmt)
+    if not group:
+        return {"error" : "Group not found"}, 404
     return GroupSchema(exclude=["password"]).dump(group)
 
 # CREATE GROUP
@@ -51,12 +53,12 @@ def create_group():
         group.password=bcrypt.generate_password_hash(group_info["password"]).decode("utf-8"),
 
     # Search DB for admin_id user
-    stmt = db.select(User).where(User.id==group_info["admin_id"])
+    stmt = db.select(User).where(User.id==group_info.get("admin_id", None))
     admin_user = db.session.scalar(stmt)
     if admin_user:
         group.admin_id=group_info["admin_id"]
     else:
-        return {"Error": "Invalid user ID: admin_id"}, 400
+        group.admin_id=get_jwt_identity()
 
     # Add new Group to session and flush
     db.session.add(group)
@@ -96,6 +98,7 @@ def delete_group(group_id):
 @groups.route("/<int:group_id>", methods=["PATCH", "PUT"])
 @jwt_required()
 def update_group(group_id):
+    # fields [name, password, admin_id]
     # Confirm group exists
     # Database query: return group with group_id
     stmt = db.select(Group).filter_by(id=group_id)
@@ -104,12 +107,11 @@ def update_group(group_id):
         return {"Error": "Group not found"}, 404
     # Validate Authority: Only administrator or group admin user can change group details
     is_user_or_admin(group.admin_id)
-
     # Validate updated group info through schema 
     group_info = GroupSchema(exclude=["id"]).load(request.json)
     
-    # If updated group name provided, update group name
-    if group_info.get("name", None) != group.name:
+    # If updated group name provided, update group name (If changed)
+    if group_info.get("name", None) and group_info.get("name", None) != group.name:
         # Validate new group name unique
         # Search DB for group with new group name
         stmt = db.select(Group).where(Group.name==group_info["name"])
@@ -119,15 +121,24 @@ def update_group(group_id):
             return {"Error": "Group exists with that name"}, 400
         group.name = group_info.get("name", group.name) 
     
-    group.admin_id = group_info.get("group_admin", group.admin_id)# ----------------------------- > NEED TO VALIDATE ADMIN ID EXISTS
+    # If updated group admin_id provided update group_admin
+    if group_info.get("admin_id", None):
+        # DB Search: check provided user <admin_id> is a member of group <group_id> 
+        stmt = db.select(UserGroup).where(UserGroup.user_id == group_info["admin_id"], UserGroup.group_id == group_id)
+        admin = db.session.scalar(stmt)
+        # Only update if user exists and is member of group
+        if admin:
+            group.admin_id = group_info.get("admin_id", group.admin_id)
+
     # update password
     if group_info.get("password", None):
-        group.password = bcrypt.generate_password_hash(group_info["password"])
+        group.password = bcrypt.generate_password_hash(group_info["password"]).decode("utf-8")
 
+    db.session.commit()
     # exclude password hash in json return
-    return GroupSchema(exclude=["password"]).dump(group), 200
+    return GroupSchema(exclude=["password", "users"]).dump(group), 200
 
-# JOIN GROUP # -------------------------------------------------------------------------------------->create group admin, admin, user authoriser and merge this with add member
+# JOIN GROUP
 @groups.route("/<int:group_id>", methods=["POST"])
 @jwt_required()
 def join_group(group_id):
@@ -135,17 +146,19 @@ def join_group(group_id):
     stmt = db.select(UserGroup).where(UserGroup.group_id == group_id, UserGroup.user_id == get_jwt_identity())
     member = db.session.scalar(stmt)
     if member:
-        return {"User already member of this group"}, 400
+        return {"error" : "User already member of this group"}, 400
 
     join_info = GroupSchema(only=["password"]).load(request.json)
     # Database query: return group with group_id
     stmt = db.select(Group).filter_by(id=group_id)
     group = db.session.scalar(stmt)
-    # Check username exists & password hash matches
-    if not group or not bcrypt.check_password_hash(group.password, join_info["password"]):
+    # Check group exists
+    if not group:
         # return 401 (Unauthorised error) if invalid password
-        return {"Error": "Invalid passphrase to join group"}, 401
-
+        return {"error": "Group not found"}, 404
+    # check password hash matches
+    if group.password and not bcrypt.check_password_hash(group.password, join_info["password"]):
+        return {"error": "Invalid passphrase to join group"}, 401
     # Add member to group (insert user_id/Group_id pair into user_groups table)
     member = UserGroup(
         user_id=get_jwt_identity(),
@@ -157,54 +170,14 @@ def join_group(group_id):
     # Return group listing
     stmt = db.select(Group).filter_by(id=group_id)
     group = db.session.scalar(stmt)
-    return GroupSchema(exclude=["password"]).dump(group)
-
-# ADD MEMBER
-@groups.route("/<int:group_id>/members/<int:user_id>", methods=["POST"])
-@jwt_required()
-def add_member(group_id, user_id):
-
-    # Database query: return group with group_id
-    stmt = db.select(Group).filter_by(id=group_id)
-    group = db.session.scalar(stmt)
-    if not group:
-        return {"Error": "Group not found"}, 404
-    # Validate Authority: Only administrator or group admin user can add users to group
-    is_user_or_admin(group.admin_id)
-
-    # Check if already a member (db lookup UserGroup for matching user/group entry)
-    stmt = db.select(UserGroup).where(UserGroup.group_id == group_id, UserGroup.user_id == get_jwt_identity())
-    member = db.session.scalar(stmt)
-    if member:
-        return {"User already member of this group"}, 400
-
-    # Database query: return user with user_id
-    stmt = db.select(User).filter_by(id=id)
-    user = db.session.scalar(stmt)
-    # Check username exists & password hash matches
-    if not user:
-        # return 401 (Unauthorised error) if invalid password
-        return {"Error": "User not found"}, 404
-
-    # Add member to group (insert user_id/Group_id pair into user_groups table)
-    member = UserGroup(
-        user_id=user_id,
-        group_id=group_id
-    )
-    db.session.add(member)
-    db.session.commit()
-
-    # Return group listing
-    stmt = db.select(Group).filter_by(id=group_id)
-    group = db.session.scalar(stmt)
-    return GroupSchema(exclude=["password"]).dump(group)
+    return GroupSchema(exclude=["password"]).dump(group), 201
 
 # REMOVE GROUP MEMBER
 @groups.route("/<int:group_id>/members/<int:user_id>", methods=["DELETE"])
 @jwt_required()
 def delete_member(group_id, user_id):
-    # Only administrator or user can remove user from group
-    is_user_or_admin() # -----------------------------------------------------------------------------------------------------------------> Allow group admin to delete users
+    # Admin, group admin or <user_id> can remove <user_id> from group
+    is_user_group_admin_or_admin(user_id, group_id) 
     # Database query: return user_group pair with <group_id> & <user_id>
     stmt = db.select(UserGroup).where(UserGroup.user_id == user_id, UserGroup.group_id==group_id)
     user_group = db.session.scalar(stmt)
@@ -232,7 +205,7 @@ def delete_member(group_id, user_id):
 from models.wanted_book import WantedBook
 
 # GET ALL BOOKS GROUP USERS WANT
-@groups.route("/<int:group_id>/wants", methods=["GET"])
+@groups.route("/<int:group_id>/wanted-books", methods=["GET"])
 @jwt_required()
 def get_group_books(group_id):
     # Only members can see booklist
@@ -240,6 +213,4 @@ def get_group_books(group_id):
     # output wanted_books where User_id in (user_groups.userid (where usergroup == group)
     stmt = db.select(User).join(UserGroup).join(Group).where(Group.id == group_id)
     users = db.session.scalars(stmt)
-    print(stmt)
     return UserSchema(only =["username", "wanted_books"], many=True).dump(users)
-    # id

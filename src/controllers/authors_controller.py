@@ -25,7 +25,7 @@ def add_author():
     # Load author data through schema
     author_info = AuthorSchema(exclude=["id"]).load(request.json)
     # Check Author isn't already in database
-    stmt = db.select(Author).where(Author.surname == author_info["surname"], Author.given_name == author_info.get("given_name"), None)
+    stmt = db.select(Author).where(Author.surname == author_info["surname"], Author.given_names == author_info.get("given_name"), None)
     check = db.session.scalar(stmt)
     if check:
         return {"error": f"Author already exists, id={check.id}"}, 400
@@ -33,7 +33,7 @@ def add_author():
     # Add Author to DB
     author = Author(
         surname = author_info["surname"],
-        given_name = author_info.get("given_name")
+        given_names = author_info.get("given_names")
     )
     db.session.add(author)
     db.session.commit()
@@ -41,9 +41,9 @@ def add_author():
     return AuthorSchema().dump(author), 201
 
 # UPDATE AUTHOR
-@authors.route("/<int:author_id>", methods=["PATCH, PUT"])
+@authors.route("/<int:author_id>", methods=["PUT", "PATCH"])
 @jwt_required()
-def add_author(author_id):
+def update_author(author_id):
     # Verify user credentials - only admin can update author
     is_admin()
     # input data required = [] optional = [surname, given_names]

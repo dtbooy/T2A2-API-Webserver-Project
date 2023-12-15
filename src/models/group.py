@@ -20,5 +20,5 @@ class GroupSchema(ma.Schema):
 
     class Meta:
         ordered = True
-        fields = ("id", "name", "users", "password")
+        fields = ("id", "name", "users", "password", "admin_id")
 
