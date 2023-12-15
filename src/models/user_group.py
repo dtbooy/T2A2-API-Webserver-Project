@@ -8,8 +8,8 @@ class UserGroup(db.Model):
     # Attributes
     id = db.Column(db.Integer, primary_key=True)
     # FKs
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete='CASCADE'), nullable=False)
+    group_id = db.Column(db.Integer, db.ForeignKey("groups.id", ondelete='CASCADE'), nullable=False)
     # Relationships
     user = db.relationship("User", back_populates="groups")
     group = db.relationship("Group", back_populates="users")

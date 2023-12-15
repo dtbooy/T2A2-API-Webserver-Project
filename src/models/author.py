@@ -2,6 +2,7 @@ from app import db, ma
 from marshmallow import fields
 
 # Authors Model
+
 class Author(db.Model):
     # Table name
     __tablename__ = "authors"

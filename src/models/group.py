@@ -13,7 +13,7 @@ class Group(db.Model):
     admin_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     # Relationships
     users = db.relationship("UserGroup", back_populates="group", cascade="all, delete-orphan")
-    # admin = db.relationship("")
+
 
 class GroupSchema(ma.Schema):
     users = fields.Pluck("UserGroupSchema", "user", many=True)

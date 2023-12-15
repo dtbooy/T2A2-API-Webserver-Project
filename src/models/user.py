@@ -4,13 +4,15 @@ from marshmallow.validate import Length
 
 # Users Model
 class User(db.Model):
+    # Table name
     __tablename__ = "users"
+    # PK
     id = db.Column(db.Integer, primary_key=True)
+    # Attributes
     username = db.Column(db.String, nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True)
     is_admin = db.Column(db.Boolean, default=False)
-
     # Relationships
     groups = db.relationship("UserGroup", back_populates="user", cascade="all, delete-orphan")
     owned_books = db.relationship("UserBook", back_populates="user", cascade="all, delete-orphan")

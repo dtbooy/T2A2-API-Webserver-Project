@@ -7,15 +7,15 @@ QUALITIES = ["any", "fair", "good", "mint"]
 # users_groups table Model
 class WantedBook(db.Model):
     # Table name
-    __tablename__ = "wantedbooks"
+    __tablename__ = "wanted_books"
     # Attributes
     id = db.Column(db.Integer, primary_key=True)
     quality = db.Column(db.String, default="any")
     # FKs
     user_id = db.Column(db.Integer, db.ForeignKey(
-        "users.id"), nullable=False)
+        "users.id", ondelete='CASCADE'), nullable=False)
     book_id = db.Column(db.Integer, db.ForeignKey(
-        "books.id"), nullable=False)
+        "books.id", ondelete='CASCADE'), nullable=False)
     # Relationships
     user = db.relationship("User", back_populates="wanted_books")
     book = db.relationship("Book", back_populates="wanted_books")

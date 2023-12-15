@@ -9,9 +9,9 @@ class BookAuthor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     # FKs
     author_id = db.Column(db.Integer, db.ForeignKey(
-        "authors.id"), nullable=False)
+        "authors.id", ondelete='CASCADE'), nullable=False)
     book_id = db.Column(db.Integer, db.ForeignKey(
-        "books.id"), nullable=False)
+        "books.id", ondelete='CASCADE'), nullable=False)
     # Relationships
     author = db.relationship("Author", back_populates="authors")
     book = db.relationship("Book", back_populates="authors")
