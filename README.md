@@ -12,17 +12,61 @@ R9 	Discuss the database relations to be implemented in your application
 R10 	Describe the way tasks are allocated and tracked in your project
 
 # R1 Problem Identification.
+The Lifeline Bookfest is the largest second-hand book sale in the southern hemisphere.
+
+* what books am I looking for?
+* what books do I own?
+* How can I share this information with friends so we can help each other find books we are after? 
+
+This application will allow users to store a lists of all the they own and a wish list of books they are looking for which will be able to be shared with friends.
+
+
 The explicit use case for this is the Lifeline Bookfest (big second hand book sale). I usually go with a vague idea that I'm looking for certain series / authors, but never remember which ones I actually own (which is why I have 3 copies  of a Clash of Kings, but still haven't replaced my copy of Storm of Swords after someone borrowed it forever)
+This app is designed to solve 3 issues:
+1. 
 
 
 # R2 Why is it a problem that needs solving?
 
 
-# R3 Why have you chosen this database system. What are the drawbacks compared to others?
-PostgreSQL
+# R3 Database system choice
+
+The database system I have chosen to use is PostgreSQL 
+This DBMS was chosen due to the following considerations:
+* __Relational DBMS:__ PostgreSQL, being a relational DBMS is designed to handle structured data. This application involves storing of book data, which is structured data with well-defined relationships, making an RDBMS an appropriate choice. An alternative option could be to store the isbn:book_id table in a separate Key-Value Store Database which would have advantages in speed and scalability for the ISBN lookup feature, however the current proposed scale of the app would make these advantages negligible compared to the added complexity involved.
+* __Price:__ The application in its current form has a very limited capacity to generate any money, being a niche application with a relatively limited user pool for looking for second hand books. This requires that the cost base for this application need to be practically nil for it to be viable. Conveniently PostgreSQL is a free open source object-relational database management system commonly used in web applications. Which makes it a great choice for this project.
+* __Stability:__ PostgreSQL has been in active development for over 37 years making it a mature and stable database system. 
+* __Documentation__: PostgreSQL has an active community providing support, documentation, and continuous improvement. With the maturity of the system it is likely there will be documented  solutions available for the majority of issues encountered.
+* __Standards Compliance:__ PostgreSQL is ACID compliant which provides transactional integrity.
+* __Scalability:__ While the current proposed form of the application is quite specific, there is potential that the scope may be expanded in a more general purpose direction (other books fairs, or expanding into a community based application with book reviews). As such, while a low priority, the capacity to scale needs to be a consideration. PostgreSQL can handle large amounts of data and is designed to scale both vertically and horizontally. Setting up and managing replication can be more complex compared to some other database systems
+* __Stability:__ PostgreSQL is considered to be highly reliable and stable and generally performs well on read-intensive applications;
+* __Security:__ PostgreSQL offers robust security features, including SSL certificates, data encryption, and role-based access control. Other paid DBMS may have additional security related  features, however the PostgreSQL offering is considered more than adequate for the current application
 
 
-# R4 Identify and discuss the key functionalities and benefits of an ORM
+### References
+* https://www.trustradius.com/products/postgresql/ 
+* https://cloud.google.com/learn/postgresql-vs-sql
+* https://db-engines.com/en/system/PostgreSQL 
+* https://www.cockroachlabs.com/blog/limitations-of-postgres/
+* https://www.sprinkledata.com/blogs/postgres-vs-oracle-an-in-depth-comparison-for-database-management
+
+
+
+
+# R4 Key functionalities and benefits of an ORM
+Object-Relational Mapping (ORM) is a framework that simplifies the between an Object Oriented Programing (OOP) language and a relational database. It creates a level of abstraction away from the database layer, allowing the developer to interact using their preferred programming language.
+
+The key functionalities and benefits of an ORM are:
+* __Object Relational Mapping__: an ORM Maps database tables and records to objects in the chosen OOP language. This makes it simpler to work with data in an OOP language, as the ORM handles the translation between the database structure and the OOP model.
+* __Abstraction of Database Operations:__ ORM systems abstract away much of the boilerplate code associated with database interactions. As well as saving time this allows code to be written database independently, allows for flexibility in choosing the right database system for the application and making it easier to switch between different database engines without significant code changes.
+* __CRUD Operations:__ an ORM allows database operations (Create, Read, Update & Delete) to be written using object-oriented syntax, making code more readable and maintainable.
+* __Sanitation of Inputs__: Most ORMs will provide mechanisms to parameterise queries. This helps to mitigate the risk of SQL injections, improving security.
+
+## References
+* https://www.freecodecamp.org/news/what-is-an-orm-the-meaning-of-object-relational-mapping-database-tools/
+* https://www.altexsoft.com/blog/object-relational-mapping/
+* https://blog.bitsrc.io/what-is-an-orm-and-why-you-should-use-it-b2b6f75f5e2a
+
 
 
 # R5 API Endpoints
@@ -126,7 +170,7 @@ The figure below outlines the applications routes and CRUD operation endpoints:
 ![/users/<user_id>/owned-books/<book_id> (DELETE)](./docs/users-userid-ownedbooks-bookid-delete.png) 
 
 
-# 10. /users/<user_id>/owned-books/isbn/<isbn> (GET)
+## 10. /users/<user_id>/owned-books/isbn/<isbn> (GET)
 * __HTTP Request Verb:__ GET
 * __Required body:__ N/A
 * __Expected response Code:__ 200 OK
@@ -399,7 +443,17 @@ PostgreSQL is the Relational Database Management System (RDBMS) used for this ap
 ## Psycops2 
 Psycopg2 is a PostgreSQL adapter for Python, providing efficient and robust connectivity to PostgreSQL databases. 
 
-# R8 Describe your projects models in terms of the relationships they have with each other
+# R8 Description of App Models
+The Application has 9 Models, representing the 9 tables in the database:
+* Book
+* Isbn
+* Author
+* BookAuthor
+* User
+* UserModel
+* WantedBook
+* Group
+* UserGroup
 
 ## Book Model
 The Book model represents the books table in the database for the app. It contains records on books. It has the following relationships with other models:
@@ -429,6 +483,7 @@ class Book(db.Model):
     wanted_books = db.relationship(
         "WantedBook", back_populates="book", cascade="all, delete-orphan")
 ```
+
 ## Isbn Model
 The Isbn model represents the isbns table in the database. It contains a register of all ISBNs and their associated book. It has a many to one relationship with the Book model (one book can have many ISBNs, but an ISBN is associated with only one book). The primary key for this model is the ISBN (a unique identifier for a book publication). The foreign key linking to the Book model is book_id, which references Primary Key field in the Book model (books.id). The Foreign key field sets a cascade on delete property to set the DBMS to delete records in the isbn table when a referenced record in the Books table is deleted. While this will be handled in the app through SLQ alchemy using the ```cascade='all', 'delete-orphan'``` property in the Book-Isbn Model relationship in the Books Model, the FK property ensure the DBMS will replicate this if the data is manipulated outside of the API. It is considered good practice to implement both methods, and this has been replicated through all the models where applicable.
 ```py
@@ -444,6 +499,7 @@ class Isbn(db.Model):
     # Relationships
     book = db.relationship("Book", back_populates="isbns")
 ```
+
 ## Author Model
 The Author model represents the authors table which contains data on authors (first_names, and surnames). It has a one to many bidirectional relationship with the BookAuthor Model. The BookAuthor model is a Junction table representing the many to many relationship between Authors and books. The Author BookAuthor SQLAlchemy relationship has is set to cascade delete associated records in the BookAuthor model on delete of an Author record.
 
@@ -480,9 +536,10 @@ class BookAuthor(db.Model):
     author = db.relationship("Author", back_populates="authors")
     book = db.relationship("Book", back_populates="authors")
 ```
+
 ## User Model
 The User model represents the users table which contains data relating to the user. It has the following relationships with other models:
-* a  one to many relationship with the UserGroup model. The UserGroup model acts in the role of a junction table representing a many to many relationship between the User model and Groups model.
+* a one to many relationship with the UserGroup model. The UserGroup model acts in the role of a junction table representing a many to many relationship between the User model and Groups model.
 * a one to many relationship with both the UserBook model and WantedBook model. 
 * These models act in the role of a joint table representing many to many relationship between the User model and the Book model, namely the records of books a user owns (UserBook) and books a user wants (WantedBook).
 These relationships are bi-directional, with the ```cascade="all, delete-orphan"``` property, which will cascade record deletion form the User Model to associated records in the UserGroup, UserBook and WantedBook Models.
@@ -506,6 +563,7 @@ class User(db.Model):
     wanted_books = db.relationship(
         "WantedBook", back_populates="user", cascade="all, delete-orphan")
 ```
+
 ## UserBook Model
 The UserBook model represents the users_books table in the database for the app. This is a join table for a many to many relationship between the users table and the books table. It contains a register of what users own which books. As such the UserBook model has two bidirectional one to many relationships with the User model and Books model respectively. 
 
@@ -526,6 +584,7 @@ class UserBook(db.Model):
     user = db.relationship("User", back_populates="owned_books")
     book = db.relationship("Book", back_populates="users_books")
 ```
+
 ## WantedBook Model
 The WantedBook model represents the wanted_books table in the database for the app. This is a join table for a many to many relationship between the users table and the books table. It contains a register of which books are wanted by which users, and the desired quality of the book. As such the WantedBook model has two bidirectional one to many relationships with the User model and Books model respectively. 
 
@@ -546,11 +605,12 @@ class WantedBook(db.Model):
     user = db.relationship("User", back_populates="wanted_books")
     book = db.relationship("Book", back_populates="wanted_books")
 ```
+
 ## Group Model
 The Group model represents the groups table in the database for the app. This table contains information regarding the groups. The model has one bidirectional many to one relationship with the UserGroup Model (The UserGroup model being a junction table representing a many to many relationship between the User and Group Models). 
 
 This relationship has the ```cascade="all, delete-orphan" ``` set, which means the app will cascade the deletion of Group records to the associated records in the UserGroup model. 
-The Groups model also defines a foreign key (admin_id) referencing the users.id column in hte Users model. This relationship isn't defined as a bidirectional relationship in SQLAlchemy as this is not required in the functionality of the app. It does have the ```ondelete='CASCADE'``` property, means the DBMS will delete the group if the group admin user account is deleted. As described above this will further cascade to delete all associated references to teh group in the users_groups table.
+The Groups model also defines a foreign key (admin_id) referencing the users.id column in the Users model. This relationship isn't defined as a bidirectional relationship in SQLAlchemy as this is not required in the functionality of the app. It does have the ```ondelete='CASCADE'``` property, means the DBMS will delete the group if the group admin user account is deleted. As described above, this will further cascade to delete all associated references to the group in the users_groups table.
 ```py
 class Group(db.Model):
     # Table name
@@ -566,6 +626,7 @@ class Group(db.Model):
     users = db.relationship(
         "UserGroup", back_populates="group", cascade="all, delete-orphan")
 ```
+
 ## UserGroup Model
 The UserGroup model represents the users_groups table in the database for the app. This is a junction table for a many to many relationship between the users table and the groups table. It contains a register of what users belong to which groups. As such the UserGroup model has two bidirectional one to many relationships with the User model and Groups model respectively. 
 
@@ -587,16 +648,40 @@ class UserGroup(db.Model):
 ```
 
 # R9 Discuss the database relations to be implemented in your application
+The database
 ![Relationship diagram](./docs/chen-erd.png) 
 
-books table de-normailsation.
+
+## books table de-normailsation.
 It should be noted that technically to fully normalise the books table, both the series and category attributes could be split into their own tables, each with a one to many relationship. This would reduce data redundancy within the books table. However it was decided however that for this application this would be not be appropriate due to:
-* Simplicity - both the series name and the category attributes are single datapoint attributes. No other information about this 
-* Stability of data - these two attributes are very unlikely to change for existing records, eliminating one of the major advantages of
-* Application of series & category dat - the application has no other purpose to access series & category external to it's association with a book record. Conversely, in most situations, when accessing a book record, the associated category and series title records would need to be accessed as well. 
-Given the above it was decided that splitting these attributes into their own tables would be introducing unnecessary complexity to the application for minimal benefit.
+* Simplicity - both the series name and the category attributes are single data point attributes. No other information about this is stored in the database.
+* Stability of data - these two attributes are very unlikely to change for existing records, making one of the major advantages of normalisation, easier data management, a moot point.
+* Application of series & category data - the application has no other purpose to access series & category data external to it's association with a book record. Conversely in most situations, when accessing a book record, the associated category and series title records would need to be accessed as well.
+Given the above it was decided that splitting these attributes into their own tables would be introducing unnecessary complexity and potentially a minor loss to performance to the application fora largely moot benefit.
 
 
 # R10 Describe the way tasks are allocated and tracked in your project
-Tasks are tracked using MS Planner 
+For this project tasks were allocated and tracked using MS Planner. MS Planner offers a Kanban Board style planning solution, providing a visual representation of the project tasks. The program allows for tasks to be planned out in an overall project view, with customisable category columns. For this project I created 5 columns:
+* Planning and Documentation
+* Coding
+* Testing
+* Review & submit
+* Optional additional features
 
+The cards where created for the project tasks required in each of these categories. Each task was assigned an expected completion date and further broken down using a checklist of activities required for each task. As the project progressed the cards were updated to reflect required changes that came to bear during development due to unforeseen complexities. 
+
+One of the features of MS Planner is the ability to assign cards to users, where they will appear in that user's specific board, which is set out in the traditional Kanban style (not started, in progress, completed). In order to track progress, I would assign cards to myself and track them through the user Kanban board as they progressed. 
+
+MS planner also has a useful automated tracking dashboard which charts the projects progress highlighting any late tasks allowing an overview of the project status at a glance. This was useful in determining whether and how far the project fell behind the original projections, and estimating how much additional time & effort would be needed to catch up.
+
+### Link to MS Planner Project
+[Link to the MS planner project board](https://tasks.office.com/coderacademy.edu.au/Home/PlanViews/5KJ5JnuAnkOXcM8ron_qcggAH9ka?Type=PlanLink&Channel=Link&CreatedTime=638383075259180000)
+
+### Project Board
+![Project Board](./docs/msplanner-projectboard.png)
+
+### User Board
+![User Board](./docs/msplanner-userboard.png)
+
+### Tracking Chart
+![Tracking Chart](./docs/msplanner-trackingchart.png)
