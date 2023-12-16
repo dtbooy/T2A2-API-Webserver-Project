@@ -19,6 +19,7 @@ The explicit use case for this is the Lifeline Bookfest (big second hand book sa
 
 
 # R3 Why have you chosen this database system. What are the drawbacks compared to others?
+PostgreSQL
 
 
 # R4 Identify and discuss the key functionalities and benefits of an ORM
@@ -401,7 +402,13 @@ Psycopg2 is a PostgreSQL adapter for Python, providing efficient and robust conn
 # R8 Describe your projects models in terms of the relationships they have with each other
 
 ## Book Model
-The book model represents the books table in the app. It contains information about books. It has a one to many relationship with the Isbn model and the 
+The Book model represents the books table in the app. It contains records on books. It has the following relationships with other models:
+* a one to many relationship with the Isbn model, which holds records on ISBNs and the associated book_id (linked to the Books model via the primary key)
+* a  one to many relationship with the BookAuthor model. The BookAuthor model acts in the role of a junction table representing a many to many relationship between the Book model and Author model.
+* a one to many relationship with both the UserBook model and WantedBook model. These models act in the role of a joint table representing many to many relationship between the Book model and User model, namely the records of books a user owns (UserBook) and books a user wants (WantedBook).
+
+These many to one relationships are bi-directional, allowing for convenient querying from both sides. These relationships are also all contingent on the existence of the book data (ie: a record in the Isbn, BookAuthor, UserBook or WantedBook models cannot exist without a corresponding reference to a record in the Book model). Foreign keys for these records are in their respective tables referencing the primary key in Books (books.id). To ensure no orphan data is created on deletion of a book record, each of these four relationships contains the ```cascade="all, delete-orphan"``` property, which means SLQ Alchemy will cascade delete the associated orphan records in these tables created when deleting a record from the book model.
+
 ```py
 class Book(db.Model):
     # Table name
@@ -423,6 +430,7 @@ class Book(db.Model):
         "WantedBook", back_populates="book", cascade="all, delete-orphan")
 ```
 ## Isbn Model
+The Isbn model represents the isbns table in the database. It contains a register of all ISBNs and their associated book. It has a many to one relationship with the Book model (one book can have many ISBNs, but an ISBN is associated with only one book). The primary key for this model is the ISBN (a unique identifier for a book publication). The foreign key linking to the Book model is book_id, which references Primary Key field in the Book model (books.id). The Foreign key field sets a cascade on delete property to set the DBMS to delete records in the isbn table when a referenced record in the Books table is deleted. While this will be handled in the app through SLQ alchemy using the ```cascade='all', 'delete-orphan'``` property in the Book-Isbn Model relationship in the Books Model, the FK property ensure the DBMS will replicate this if the data is manipulated outside of the API. It is considered good practice to implement both methods, and this has been replicated through all the models where applicable.
 ```py
 class Isbn(db.Model):
     # Table name
@@ -437,6 +445,9 @@ class Isbn(db.Model):
     book = db.relationship("Book", back_populates="isbns")
 ```
 ## Author Model
+The Author model contains data on authors (first_names, and surnames).
+
+NOTE: In this structure, if an author is deleted, book records can be left without an author record. This doesn't break any of the current functionality of the application, it will need to be understood from a database management / maintenance perspective when data handling policies and procedures are developed to ensure data integrity.
 ```py
 class Author(db.Model):
     # Table name
@@ -555,7 +566,16 @@ join table for Users Table and Groups Table
 
 
 # R9 Discuss the database relations to be implemented in your application
+![Relationship diagram](./docs/chen-erd.png) 
+
+books table de-normailsation.
+It should be noted that technically to fully normalise the books table, both the series and category attributes could be split into their own tables, each with a one to many relationship. This would reduce data redundancy within the books table. However it was decided however that for this application this would be not be appropriate due to:
+* Simplicity - both the series name and the category attributes are single datapoint attributes. No other information about this 
+* Stability of data - these two attributes are very unlikely to change for existing records, eliminating one of the major advantages of
+* Application of series & category dat - the application has no other purpose to access series & category external to it's association with a book record. Conversely, in most situations, when accessing a book record, the associated category and series title records would need to be accessed as well. 
+Given the above it was decided that splitting these attributes into their own tables would be introducing unnecessary complexity to the application for minimal benefit.
 
 
 # R10 Describe the way tasks are allocated and tracked in your project
+Tasks are tracked using MS Planner 
 
