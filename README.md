@@ -26,7 +26,7 @@ PostgreSQL
 
 
 # R5 API Endpoints
-The figure below outlines the Endpoint Routes for the API
+The figure below outlines the applications routes and CRUD operation endpoints:
 ![API Endpoint route map](./docs/route-map.png) 
 
 ## 1. /login (POST)
@@ -402,7 +402,7 @@ Psycopg2 is a PostgreSQL adapter for Python, providing efficient and robust conn
 # R8 Describe your projects models in terms of the relationships they have with each other
 
 ## Book Model
-The Book model represents the books table in the app. It contains records on books. It has the following relationships with other models:
+The Book model represents the books table in the database for the app. It contains records on books. It has the following relationships with other models:
 * a one to many relationship with the Isbn model, which holds records on ISBNs and the associated book_id (linked to the Books model via the primary key)
 * a  one to many relationship with the BookAuthor model. The BookAuthor model acts in the role of a junction table representing a many to many relationship between the Book model and Author model.
 * a one to many relationship with both the UserBook model and WantedBook model. These models act in the role of a joint table representing many to many relationship between the Book model and User model, namely the records of books a user owns (UserBook) and books a user wants (WantedBook).
@@ -445,7 +445,7 @@ class Isbn(db.Model):
     book = db.relationship("Book", back_populates="isbns")
 ```
 ## Author Model
-The Author model contains data on authors (first_names, and surnames).
+The Author model represents the authors table which contains data on authors (first_names, and surnames). It has a one to many bidirectional relationship with the BookAuthor Model. The BookAuthor model is a Junction table representing the many to many relationship between Authors and books. The Author BookAuthor SQLAlchemy relationship has is set to cascade delete associated records in the BookAuthor model on delete of an Author record.
 
 NOTE: In this structure, if an author is deleted, book records can be left without an author record. This doesn't break any of the current functionality of the application, it will need to be understood from a database management / maintenance perspective when data handling policies and procedures are developed to ensure data integrity.
 ```py
@@ -464,10 +464,11 @@ class Author(db.Model):
 
 
 ## BookAuthor Model 
+The BookAuthor model represents the books_authors table. This is a junction table representing the many to many relationship between the Authors and Books Models. It contains a each record registers an instance of an author record and a book record. As such it contains one to many relationships (bidirectional) with both the Book model and the Author model. The model construct has two foreign keys author_id (referencing the primary key in the Author model, authors.id) and book_id (referencing the primary key in the Book model books.id). Each of these foreign keys has the ```ondelete="CASCADE"``` property, which will remove records in the BookAuthor table when an associated Book or Author record is deleted within the DBMS.
 ```py
 class BookAuthor(db.Model):
     # Table name
-    __tablename__ = "works"
+    __tablename__ = "books_authors"
     # PK
     id = db.Column(db.Integer, primary_key=True)
     # FKs
@@ -480,6 +481,12 @@ class BookAuthor(db.Model):
     book = db.relationship("Book", back_populates="authors")
 ```
 ## User Model
+The User model represents the users table which contains data relating to the user. It has the following relationships with other models:
+* a  one to many relationship with the UserGroup model. The UserGroup model acts in the role of a junction table representing a many to many relationship between the User model and Groups model.
+* a one to many relationship with both the UserBook model and WantedBook model. 
+* These models act in the role of a joint table representing many to many relationship between the User model and the Book model, namely the records of books a user owns (UserBook) and books a user wants (WantedBook).
+These relationships are bi-directional, with the ```cascade="all, delete-orphan"``` property, which will cascade record deletion form the User Model to associated records in the UserGroup, UserBook and WantedBook Models.
+
 ```py
 class User(db.Model):
     # Table name
@@ -500,6 +507,10 @@ class User(db.Model):
         "WantedBook", back_populates="user", cascade="all, delete-orphan")
 ```
 ## UserBook Model
+The UserBook model represents the users_books table in the database for the app. This is a join table for a many to many relationship between the users table and the books table. It contains a register of what users own which books. As such the UserBook model has two bidirectional one to many relationships with the User model and Books model respectively. 
+
+The model defines these to the DBMS with the foreign keys user_id (which references primary key in the User Model, the user.id column) and book_id (which references primary key in the Book model, the book.id column). These Foreign Keys also have the ```ondelete='CASCADE'``` property, means the DBMS will delete a record in the users_books table if either of their referenced records is deleted in the foreign tables. 
+
 ```py
 class UserBook(db.Model):
     # Table name
@@ -516,6 +527,9 @@ class UserBook(db.Model):
     book = db.relationship("Book", back_populates="users_books")
 ```
 ## WantedBook Model
+The WantedBook model represents the wanted_books table in the database for the app. This is a join table for a many to many relationship between the users table and the books table. It contains a register of which books are wanted by which users, and the desired quality of the book. As such the WantedBook model has two bidirectional one to many relationships with the User model and Books model respectively. 
+
+The model defines these to the DBMS with the foreign keys user_id (which references primary key in the User Model, the user.id column) and book_id (which references primary key in the Book model, the book.id column). These Foreign Keys also have the ```ondelete='CASCADE'``` property, means the DBMS will delete a record in the users_books table if either of their referenced records is deleted in the foreign tables. 
 ```py
 class WantedBook(db.Model):
     # Table name
@@ -533,6 +547,10 @@ class WantedBook(db.Model):
     book = db.relationship("Book", back_populates="wanted_books")
 ```
 ## Group Model
+The Group model represents the groups table in the database for the app. This table contains information regarding the groups. The model has one bidirectional many to one relationship with the UserGroup Model (The UserGroup model being a junction table representing a many to many relationship between the User and Group Models). 
+
+This relationship has the ```cascade="all, delete-orphan" ``` set, which means the app will cascade the deletion of Group records to the associated records in the UserGroup model. 
+The Groups model also defines a foreign key (admin_id) referencing the users.id column in hte Users model. This relationship isn't defined as a bidirectional relationship in SQLAlchemy as this is not required in the functionality of the app. It does have the ```ondelete='CASCADE'``` property, means the DBMS will delete the group if the group admin user account is deleted. As described above this will further cascade to delete all associated references to teh group in the users_groups table.
 ```py
 class Group(db.Model):
     # Table name
@@ -545,9 +563,13 @@ class Group(db.Model):
     # FKs
     admin_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     # Relationships
-    users = db.relationship("UserGroup", back_populates="group", cascade="all, delete-orphan")
+    users = db.relationship(
+        "UserGroup", back_populates="group", cascade="all, delete-orphan")
 ```
 ## UserGroup Model
+The UserGroup model represents the users_groups table in the database for the app. This is a junction table for a many to many relationship between the users table and the groups table. It contains a register of what users belong to which groups. As such the UserGroup model has two bidirectional one to many relationships with the User model and Groups model respectively. 
+
+The model defines these to the DBMS with the foreign keys user_id (which references primary key in the User Model, the user.id column) and group_id (which references primary key in the Group model, the group.id column). These Foreign Keys also have the ```ondelete='CASCADE'``` property, means the DBMS will delete a record in the users_groups table if either of their referenced records is deleted in the foreign tables. 
 ```py
 class UserGroup(db.Model):
     # Table name
@@ -555,15 +577,14 @@ class UserGroup(db.Model):
     # Attributes
     id = db.Column(db.Integer, primary_key=True)
     # FKs
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete='CASCADE'), nullable=False)
-    group_id = db.Column(db.Integer, db.ForeignKey("groups.id", ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey(
+        "users.id", ondelete='CASCADE'), nullable=False)
+    group_id = db.Column(db.Integer, db.ForeignKey(
+        "groups.id", ondelete='CASCADE'), nullable=False)
     # Relationships
     user = db.relationship("User", back_populates="groups")
     group = db.relationship("Group", back_populates="users")
 ```
-
-join table for Users Table and Groups Table
-
 
 # R9 Discuss the database relations to be implemented in your application
 ![Relationship diagram](./docs/chen-erd.png) 
