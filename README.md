@@ -1,33 +1,27 @@
-# T2A2-API-Webserver-Project
+# Dirk Booy - T2A2 - API Webserver Project
+[Github link: https://github.com/dtbooy/T2A2-API-Webserver-Project](https://github.com/dtbooy/T2A2-API-Webserver-Project)
 
-R1 	Identification of the problem you are trying to solve by building this particular app.
-R2 	Why is it a problem that needs solving?
-R3 	Why have you chosen this database system. What are the drawbacks compared to others?
-R4 	Identify and discuss the key functionalities and benefits of an ORM
-R5 	Document all endpoints for your API
-R6 	An ERD for your app
-R7 	Detail any third party services that your app will use
-R8 	Describe your projects models in terms of the relationships they have with each other
-R9 	Discuss the database relations to be implemented in your application
-R10 	Describe the way tasks are allocated and tracked in your project
+## Contents
+* [R1 Problem Identification](#R1-Problem-Identification)
+* [R2 Why is it a problem that needs solving?](#R2-Why-is-it-a-problem-that-needs-solving?)
+* [R3 Database system choice](#R3-Database-system-choice)
+* [R4 Key functionalities and benefits of an ORM](#R4-Key-functionalities-and-benefits-of-an-ORM)
+* [R5 API Endpoints](#R5-API-Endpoints)
+* [R6 ERD for the database](#R6-ERD-for-the-database)
+* [R7 Third party services used](#R7-Third-party-services-used)	
+* [R8 Description of App Models](#-R8-Description-of-App-Models)
+* [R9 Database Relations in the Application](#R9-Database-Relations-in-the-Application)
+* [R10 Project Management - Task allocation and tracking](#R10-Project-Management---Task-allocation-and-tracking)
 
-# R1 Problem Identification.
-The Lifeline Bookfest is the largest second-hand book sale in the southern hemisphere.
+# R1 Problem Identification
+The Lifeline Bookfest, the largest second-hand book sale in the southern hemisphere, offers a vast array of over a million books loosely organized into categories. It is a great opportunity to expand your book collection with minimal expenditure. However, for avid book enthusiasts, managing a substantial collection can lead to challenges such as unintentional duplicate purchases. Another challenge when going in groups it can be hard to manage what books people are looking for and which ones they already own. 
 
-* what books am I looking for?
-* what books do I own?
-* How can I share this information with friends so we can help each other find books we are after? 
-
-This application will allow users to store a lists of all the they own and a wish list of books they are looking for which will be able to be shared with friends.
-
-
-The explicit use case for this is the Lifeline Bookfest (big second hand book sale). I usually go with a vague idea that I'm looking for certain series / authors, but never remember which ones I actually own (which is why I have 3 copies  of a Clash of Kings, but still haven't replaced my copy of Storm of Swords after someone borrowed it forever)
-This app is designed to solve 3 issues:
-1. 
-
+In response to these challenges, the proposed application aims to empower users to efficiently catalog the books they own and maintain a wish list of desired titles. These list will not only serve as a personal reference but will also be shareable among friends.
 
 # R2 Why is it a problem that needs solving?
+The challenges faced by avid book enthusiasts during events like the Lifeline Bookfest highlight the need for a solution to streamline the management of personal book collections. The sheer volume and diversity of books available at such events make it easy for individuals to lose track of their existing collection, leading to unintended duplicate purchases. This not only results in unnecessary expenses but also diminishes the overall enjoyment of the book-buying experience.
 
+Moreover, the lack of a centralized system to track and share book lists makes it difficult for users to actively collaborate with friends in the pursuit of specific books. By addressing these challenges, our proposed application seeks to enhance the overall experience of book enthusiasts, promoting a more organized, cost-effective, and collaborative approach to exploring and expanding personal libraries during large-scale book sales.
 
 # R3 Database system choice
 
@@ -418,10 +412,17 @@ _Note: if ISBN is not in books table will return a 404 error._
 
 
 
-# R6 An ERD for your app
+# R6 ERD for the database
 ![ERD](./docs/erd.png) 
 
-# R7 Detail any third party services that your app will use
+## Notes on Table normalistaion
+It should be noted that technically to fully normalise the books table, both the series and category attributes could be split into their own tables, each with a one to many relationship. This would reduce data redundancy within the books table. However it was decided however that for this application this would be not be appropriate due to:
+* Simplicity - both the series name and the category attributes are single data point attributes. No other information about this is stored in the database.
+* Stability of data - these two attributes are very unlikely to change for existing records, making one of the major advantages of normalisation, easier data management, a moot point.
+* Application of series & category data - the application has no other purpose to access series & category data external to it's association with a book record. Conversely in most situations, when accessing a book record, the associated category and series title records would need to be accessed as well.
+Given the above it was decided that splitting these attributes into their own tables would be introducing unnecessary complexity and potentially a minor loss to performance to the application fora largely moot benefit.
+
+# R7 Third party services used
 ## Flask 
 Flask is a lightweight web framework for Python. It simplifies the creation of web applications, emphasising simplicity and flexibility. There are also many extensions available for Flask, adding additional functionality, such as ORMs, encryption, and authentication. For this application, the following Flask extensions were employed:
 
@@ -458,7 +459,7 @@ The Application has 9 Models, representing the 9 tables in the database:
 ## Book Model
 The Book model represents the books table in the database for the app. It contains records on books. It has the following relationships with other models:
 * a one to many relationship with the Isbn model, which holds records on ISBNs and the associated book_id (linked to the Books model via the primary key)
-* a  one to many relationship with the BookAuthor model. The BookAuthor model acts in the role of a junction table representing a many to many relationship between the Book model and Author model.
+* a  one to many relationship with the BookAuthor model. The BookAuthor model acts in the role of a join table representing a many to many relationship between the Book model and Author model.
 * a one to many relationship with both the UserBook model and WantedBook model. These models act in the role of a joint table representing many to many relationship between the Book model and User model, namely the records of books a user owns (UserBook) and books a user wants (WantedBook).
 
 These many to one relationships are bi-directional, allowing for convenient querying from both sides. These relationships are also all contingent on the existence of the book data (ie: a record in the Isbn, BookAuthor, UserBook or WantedBook models cannot exist without a corresponding reference to a record in the Book model). Foreign keys for these records are in their respective tables referencing the primary key in Books (books.id). To ensure no orphan data is created on deletion of a book record, each of these four relationships contains the ```cascade="all, delete-orphan"``` property, which means SLQ Alchemy will cascade delete the associated orphan records in these tables created when deleting a record from the book model.
@@ -501,7 +502,7 @@ class Isbn(db.Model):
 ```
 
 ## Author Model
-The Author model represents the authors table which contains data on authors (first_names, and surnames). It has a one to many bidirectional relationship with the BookAuthor Model. The BookAuthor model is a Junction table representing the many to many relationship between Authors and books. The Author BookAuthor SQLAlchemy relationship has is set to cascade delete associated records in the BookAuthor model on delete of an Author record.
+The Author model represents the authors table which contains data on authors (first_names, and surnames). It has a one to many bidirectional relationship with the BookAuthor Model. The BookAuthor model is a join table representing the many to many relationship between Authors and books. The Author BookAuthor SQLAlchemy relationship has is set to cascade delete associated records in the BookAuthor model on delete of an Author record.
 
 NOTE: In this structure, if an author is deleted, book records can be left without an author record. This doesn't break any of the current functionality of the application, it will need to be understood from a database management / maintenance perspective when data handling policies and procedures are developed to ensure data integrity.
 ```py
@@ -520,7 +521,7 @@ class Author(db.Model):
 
 
 ## BookAuthor Model 
-The BookAuthor model represents the books_authors table. This is a junction table representing the many to many relationship between the Authors and Books Models. It contains a each record registers an instance of an author record and a book record. As such it contains one to many relationships (bidirectional) with both the Book model and the Author model. The model construct has two foreign keys author_id (referencing the primary key in the Author model, authors.id) and book_id (referencing the primary key in the Book model books.id). Each of these foreign keys has the ```ondelete="CASCADE"``` property, which will remove records in the BookAuthor table when an associated Book or Author record is deleted within the DBMS.
+The BookAuthor model represents the books_authors table. This is a join table representing the many to many relationship between the Authors and Books Models. It contains a each record registers an instance of an author record and a book record. As such it contains one to many relationships (bidirectional) with both the Book model and the Author model. The model construct has two foreign keys author_id (referencing the primary key in the Author model, authors.id) and book_id (referencing the primary key in the Book model books.id). Each of these foreign keys has the ```ondelete="CASCADE"``` property, which will remove records in the BookAuthor table when an associated Book or Author record is deleted within the DBMS.
 ```py
 class BookAuthor(db.Model):
     # Table name
@@ -539,7 +540,7 @@ class BookAuthor(db.Model):
 
 ## User Model
 The User model represents the users table which contains data relating to the user. It has the following relationships with other models:
-* a one to many relationship with the UserGroup model. The UserGroup model acts in the role of a junction table representing a many to many relationship between the User model and Groups model.
+* a one to many relationship with the UserGroup model. The UserGroup model acts in the role of a join table representing a many to many relationship between the User model and Groups model.
 * a one to many relationship with both the UserBook model and WantedBook model. 
 * These models act in the role of a joint table representing many to many relationship between the User model and the Book model, namely the records of books a user owns (UserBook) and books a user wants (WantedBook).
 These relationships are bi-directional, with the ```cascade="all, delete-orphan"``` property, which will cascade record deletion form the User Model to associated records in the UserGroup, UserBook and WantedBook Models.
@@ -607,7 +608,7 @@ class WantedBook(db.Model):
 ```
 
 ## Group Model
-The Group model represents the groups table in the database for the app. This table contains information regarding the groups. The model has one bidirectional many to one relationship with the UserGroup Model (The UserGroup model being a junction table representing a many to many relationship between the User and Group Models). 
+The Group model represents the groups table in the database for the app. This table contains information regarding the groups. The model has one bidirectional many to one relationship with the UserGroup Model (The UserGroup model being a join table representing a many to many relationship between the User and Group Models). 
 
 This relationship has the ```cascade="all, delete-orphan" ``` set, which means the app will cascade the deletion of Group records to the associated records in the UserGroup model. 
 The Groups model also defines a foreign key (admin_id) referencing the users.id column in the Users model. This relationship isn't defined as a bidirectional relationship in SQLAlchemy as this is not required in the functionality of the app. It does have the ```ondelete='CASCADE'``` property, means the DBMS will delete the group if the group admin user account is deleted. As described above, this will further cascade to delete all associated references to the group in the users_groups table.
@@ -628,7 +629,7 @@ class Group(db.Model):
 ```
 
 ## UserGroup Model
-The UserGroup model represents the users_groups table in the database for the app. This is a junction table for a many to many relationship between the users table and the groups table. It contains a register of what users belong to which groups. As such the UserGroup model has two bidirectional one to many relationships with the User model and Groups model respectively. 
+The UserGroup model represents the users_groups table in the database for the app. This is a join table for a many to many relationship between the users table and the groups table. It contains a register of what users belong to which groups. As such the UserGroup model has two bidirectional one to many relationships with the User model and Groups model respectively. 
 
 The model defines these to the DBMS with the foreign keys user_id (which references primary key in the User Model, the user.id column) and group_id (which references primary key in the Group model, the group.id column). These Foreign Keys also have the ```ondelete='CASCADE'``` property, means the DBMS will delete a record in the users_groups table if either of their referenced records is deleted in the foreign tables. 
 ```py
@@ -647,20 +648,53 @@ class UserGroup(db.Model):
     group = db.relationship("Group", back_populates="users")
 ```
 
-# R9 Discuss the database relations to be implemented in your application
-The database
+# R9 Database Relations in the Application
+For this application a database balled bookshelf was developed. It is represented pictorially in the following Chen ERD.
 ![Relationship diagram](./docs/chen-erd.png) 
 
+The database contains a total of 9 tables:
+1. __users:__ The users table contains information about the apps users, mostly for authentication and authorisation purposes. It contains the following attributes:
+    * id - this is the tables primary key and hold a unique identifier for each user
+    * username - this is the users username. it has a unique constraint (each user will need to ahave a unique username) 
+    * email - this holds the users email adress - this is an optional field
+    * is_admin - this is a boolean attribute indicating whether the user is an administrator for the app. Administrators have full access to all the data in the database. Administrator privileges cannot be set through the API  and must be set in the database directly.
+    * password - this stores a hash of the the users password. 
+1. __books:__  the books table contain data on books (except for authors and isbns which where split into their own tables during normalisation). It contains the following attributes:
+    * id - primary key for the table - unique identifier for a book record.
+    * title - the books title.
+    * category - the category the book belongs to.
+    * series - the series (if any) that the book belongs to 
+1. __groups:__ - the groups table contains records regarding groups. Groups are the mechanism to share wanted books within the application. It contains the following attributes:
+    * id - primary key for the table - unique identifier for a group record.
+    * name - the name of the group (required, must be unique)
+    * password - the password required to join the group (optional)
+    * group_admin - the user_id of the group administrator. the group administrator can remove members & change the group details. This attribute has a foreign key constraint linking it to the primary key in the users table (users.id) and an on delete cascade set, which will delete the group if the group_admin user is deleted. 
+1. __authors:__ the authors table contains records relating to authors of books. It contains the following attributes:
+    * id - primary key for the table - unique identifier for an author record.
+    * surname - authors surname (required)
+    * given_names - authors given names (optional)
+1. __isbns:__ the isbns table contains records of all the isbns and their associated book. It has a one to many relationship with the books table. It contains the following attributes:
+    * isbn - primary key for the table - unique identifier for a book.
+    * book_id - the id of the book that corresponds to the isbn. this is a foreign key referencing the primary key in the books table (book.id) this has an on delete cascade, which will delete the isbn if it associated book record is deleted.  
+1. __user_groups:__ the user_groups table is a join table which represents the many to many relationship between the users table and groups table. It's records represent an association between a group and a user. It contains the following attributes:
+    * id - primary key for the table - unique identifier for an author record.
+    * user_id - foreign key referencing the user table primary key (users.id). On delete cascade set, which will delete the user_group record if the associated user is deleted.
+    * group_id - foreign key referencing the group table primary key (group.id). On delete cascade is set, which will delete the user_group record if the associated group is deleted.
+ 
+1. __users_books:__ The users_books table is a join table representing a many to many relationship between users table and the books table. A user_books record represents the user owning the associated book. It contains the following attributes:
+    * id - primary key for the table - unique identifier for an author record.
+    * user_id - foreign key referencing the user table primary key (users.id). On delete cascade set, which will delete the users_books record if the associated user is deleted.
+    * book_id - foreign key referencing the book table primary key (book.id). On delete cascade is set, which will delete the users_books record if the associated book is deleted.
+1. __wanted_books:__ The wanted_books table is a join table representing a many to many relationship between users table and the books table. A wanted_books record represent the user wanting the associated book. It contains the following attributes:
+    * id - primary key for the table - unique identifier for an author record.
+    * user_id - foreign key referencing the user table primary key (users.id). On delete cascade set, which will delete the wanted_books record if the associated user is deleted.
+    * book_id - foreign key referencing the book table primary key (book.id). On delete cascade is set, which will delete the wanted_books record if the associated book is deleted.
+1. __books_authors:__ The books_author table is a join table representing a many to many relationship between authors table and the books table. A books_authors record associates an author record with a book record. the table contains the following attributes:
+    * id - primary key for the table - unique identifier for an author record.
+    * author_id - foreign key referencing the user table primary key (authors.id). On delete cascade set, which will delete the books_authors record if the associated author is deleted.
+    * book_id - foreign key referencing the book table primary key (book.id). On delete cascade is set, which will delete the books_author record if the associated group is deleted.
 
-## books table de-normailsation.
-It should be noted that technically to fully normalise the books table, both the series and category attributes could be split into their own tables, each with a one to many relationship. This would reduce data redundancy within the books table. However it was decided however that for this application this would be not be appropriate due to:
-* Simplicity - both the series name and the category attributes are single data point attributes. No other information about this is stored in the database.
-* Stability of data - these two attributes are very unlikely to change for existing records, making one of the major advantages of normalisation, easier data management, a moot point.
-* Application of series & category data - the application has no other purpose to access series & category data external to it's association with a book record. Conversely in most situations, when accessing a book record, the associated category and series title records would need to be accessed as well.
-Given the above it was decided that splitting these attributes into their own tables would be introducing unnecessary complexity and potentially a minor loss to performance to the application fora largely moot benefit.
-
-
-# R10 Describe the way tasks are allocated and tracked in your project
+# R10 Project Management - Task allocation and tracking
 For this project tasks were allocated and tracked using MS Planner. MS Planner offers a Kanban Board style planning solution, providing a visual representation of the project tasks. The program allows for tasks to be planned out in an overall project view, with customisable category columns. For this project I created 5 columns:
 * Planning and Documentation
 * Coding
