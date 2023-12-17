@@ -52,7 +52,7 @@ def create_group():
     if group_info.get("password", None):
         group.password=bcrypt.generate_password_hash(group_info["password"]).decode("utf-8"),
 
-    # Search DB for admin_id user
+    # return User record with id stored in admin_id
     stmt = db.select(User).where(User.id==group_info.get("admin_id", None))
     admin_user = db.session.scalar(stmt)
     if admin_user:
@@ -194,6 +194,7 @@ def delete_member(group_id, user_id):
     group_users = db.session.scalar(stmt)
     # if group users is empty - no members exist - delete
     if not group_users:
+        # return Group with id stored in group_id
         stmt = db.select(Group).where(Group.id==group_id)
         group = db.session.scalar(stmt)
         db.session.delete(group)
@@ -211,6 +212,8 @@ def get_group_books(group_id):
     # Only members can see booklist
     is_group_or_admin(group_id)
     # output wanted_books where User_id in (user_groups.userid (where usergroup == group)
+    # Return All Users in Group with id stored in sgroup id 
     stmt = db.select(User).join(UserGroup).join(Group).where(Group.id == group_id)
     users = db.session.scalars(stmt)
+    # return each Users username and wanted books
     return UserSchema(only =["username", "wanted_books"], many=True).dump(users)

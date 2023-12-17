@@ -4,7 +4,7 @@ from marshmallow import fields
 # Works table
 class BookAuthor(db.Model):
     # Table name
-    __tablename__ = "works"
+    __tablename__ = "books_authors"
     # PK
     id = db.Column(db.Integer, primary_key=True)
     # FKs

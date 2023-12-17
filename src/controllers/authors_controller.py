@@ -24,7 +24,7 @@ def add_author():
     # input data required = [surname] optional = [given_names]
     # Load author data through schema
     author_info = AuthorSchema(exclude=["id"]).load(request.json)
-    # Check Author isn't already in database
+    # Check Author isn't already in database- return author with the given_names and surname provided
     stmt = db.select(Author).where(Author.surname == author_info["surname"], Author.given_names == author_info.get("given_name"), None)
     check = db.session.scalar(stmt)
     if check:
@@ -49,7 +49,7 @@ def update_author(author_id):
     # input data required = [] optional = [surname, given_names]
     # Load author data through schema
     author_info = AuthorSchema(exclude=["id"]).load(request.json)
-    # Check Author exists
+    # Check Author exists- return author with author_id
     stmt = db.select(Author).where(Author.id == author_id)
     author = db.session.scalar(stmt)
     if not author:

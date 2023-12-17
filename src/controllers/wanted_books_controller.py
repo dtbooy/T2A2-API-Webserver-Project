@@ -29,7 +29,7 @@ def add_wanted_book(user_id):
     # input data required = [book_id] optional data = [quality]
     # Load book data through schema
     book_info = WantedBookSchema(exclude=["id"]).load(request.json)
-    # Check is wanted book entry exists 
+    # Check is wanted book entry exists - return WantedBook record with book_id & user_id
     stmt = db.select(WantedBook).where(WantedBook.book_id == book_info["book_id"], WantedBook.user_id == user_id)
     exists = db.session.scalar(stmt)
     if exists:

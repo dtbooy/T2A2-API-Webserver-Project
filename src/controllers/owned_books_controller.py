@@ -33,6 +33,7 @@ def add_book(user_id):
     # Load book data through schema
     book_info = UserBookSchema(exclude=["id"]).load(request.json)
     # Check book isn't already on bookshelf
+    # return UserBook record where user is user_id and book is the submitted book_id
     stmt = db.select(UserBook).where(UserBook.book_id == book_info["book_id"], UserBook.user_id == user_id)
     check = db.session.scalar(stmt)
     if check:
@@ -75,7 +76,7 @@ def remove_book(user_id, book_id):
 def get_wanted_book_isbn(user_id, isbn):
     # Verify user credentials - only user can search owned books 
     is_user_or_admin(user_id)
-    # check valid isbn
+    # check valid isbn - return isbn record for isbn
     stmt = db.select(Isbn).where(Isbn.isbn == isbn)
     check_isbn = db.session.scalar(stmt)
     if not check_isbn:

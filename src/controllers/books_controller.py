@@ -108,9 +108,10 @@ def update_books(book_id):
 
     # Update ISBNs if provided
     if isbn_info:
-        # Remove previous Isbns from ISBN table
+        # return all isbns with book_id
         stmt = db.select(Isbn).filter_by(book_id=book.id)
         isbns = db.session.scalars(stmt).all()
+        # Remove previous Isbns from ISBN table
         for i in isbns:
             db.session.delete(i)
         db.session.flush()
@@ -127,6 +128,7 @@ def update_books(book_id):
 
     # Update Book_Authors if provided
     if author_ids:
+        # return Book_Author records associated with book_id
         rm_stmt = db.select(BookAuthor).filter_by(book_id=book.id)
         rm_works = db.session.scalars(rm_stmt).all()
         for work in rm_works:
@@ -184,6 +186,7 @@ def validate_authors(author_ids):
     if not isinstance(author_ids, list):
         abort(400, "Invaild format. author_ids input data must be an array / list")
     for author in  author_ids:
+        # return Author record with id stored in author
         stmt = db.select(Author).where(Author.id == author)
         author_exists = db.session.scalar(stmt)
         if not author_exists:

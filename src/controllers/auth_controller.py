@@ -34,7 +34,7 @@ def auth_register():
     # Required fields = [username, password]
     user_info = UserSchema(only=["username", "password", "email"]).load(request.json)
     
-    # check if user exists
+    # check if user exists - return user record where username = the one provided
     stmt = db.select(User).where(User.username==user_info["username"])
     user = db.session.scalar(stmt)
     if user:
@@ -74,22 +74,27 @@ def is_user_or_admin(id):
         abort(403, description="Unauthorised: Access denied")
 
 def is_group_or_admin(group_id):
-    # Database query: return user with the user id stored in auth_id
+    # Database query: return user with the user id stored in auth_id and is an administrator
+    # will only return a user if they are admin and the current logged in user
     stmt = db.select(User).where(User.id == get_jwt_identity(), User.is_admin == True)
     user = db.session.scalar(stmt)
+    # Database query: return UserGroup association where user_id stored in auth_id and group_id - the input group id
+    # will only return an entry if user is a member of the group
     stmt = db.select(UserGroup).where(UserGroup.group_id == group_id, UserGroup.user_id == get_jwt_identity())
     member = db.session.scalar(stmt)
-    #Make sure it is in the database
+    # If nether queries find anything abort 403: Unauthorised
     if not member and not user:
         abort(403, description="Unauthorised: Access denied")
 
 def is_user_group_admin_or_admin(user_id, group_id):
-    # Database query: return user with the user id stored in auth_id
     auth_id =get_jwt_identity()
+    # Database query: return user with the user id stored in auth_id and is an administrator
+    # will only return a user if they are admin and the current logged in user
     stmt = db.select(User).where(User.id == auth_id, User.is_admin == True)
     user = db.session.scalar(stmt)
+    # Return the group iwth id stored in group id
     stmt = db.select(Group).where(Group.id == group_id)
     group = db.session.scalar(stmt)
-    #Make sure it is in the database
+    # abort one of the following is not true: user_id the logged in user, logged in user is group admin, or user is databgase admin)
     if not (auth_id == user_id or auth_id == group.admin_id or user):
         abort(403, description="Unauthorised: Access denied")
