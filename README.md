@@ -2,6 +2,7 @@
 [Github link: https://github.com/dtbooy/T2A2-API-Webserver-Project](https://github.com/dtbooy/T2A2-API-Webserver-Project)
 
 ## Contents
+* [Installation instructions](#Installation-instructions)
 * [R1 Problem Identification](#R1-Problem-Identification)
 * [R2 Why is it a problem that needs solving?](#R2-Why-is-it-a-problem-that-needs-solving?)
 * [R3 Database system choice](#R3-Database-system-choice)
@@ -12,6 +13,47 @@
 * [R8 Description of App Models](#-R8-Description-of-App-Models)
 * [R9 Database Relations in the Application](#R9-Database-Relations-in-the-Application)
 * [R10 Project Management - Task allocation and tracking](#R10-Project-Management---Task-allocation-and-tracking)
+
+# Installation instructions
+## Database setup
+from terminal open Postgres
+
+```sudo -u postgres psql```
+
+Create the bookshelf database with the command:
+
+```CREATE DATABASE bookshelf;```
+
+Connect to the database
+
+```\c bookshelf```
+
+Create bookshelf_dev user (replace < password > with chosen password)
+
+```create user bookshelf_dev with password '< password >';```
+
+Grant database privileges to bookshelf_dev
+
+```grant all privileges on database trello to trello_dev```
+```grant create on schema public to trello_dev```
+
+## Environment files setup
+1. Setup python virtual environment `python3 -m venv .venv`
+    - If virtual environment is not automatically activated run - `source .venv/bin/activate`
+1. Install required packages `pip install -r requirements.txt` 
+1. rename ./src/.env_sample to ./src/.env
+1. in the .env file update <password> in the DB_URI parameter to the password created for the bookshelf_dev user
+1. in the .env file update <SECRET KEY> in the SECRET_KEY parameter to a chosen secret key (this is used to encrypt the jwt tokens).
+1. rename ./src/.flaskenv_sample to ./src/.flaskenv
+
+## Start up application
+1. in the terminal navigate to the ./src folder
+1. Create the database tables with the command ```flask db create```
+1. Seed the database table with the command ```flask db seed```
+1. Start the flask app with the command ```flask run```
+
+the app should be running at http://127.0.0.1:5555
+
 
 # R1 Problem Identification
 The Lifeline Bookfest, the largest second-hand book sale in the southern hemisphere, offers a vast array of over a million books loosely organized into categories. It is a great opportunity to expand your book collection with minimal expenditure. However, for avid book enthusiasts, managing a substantial collection can lead to challenges such as unintentional duplicate purchases. Another challenge when going in groups it can be hard to manage what books people are looking for and which ones they already own. 
@@ -69,20 +111,20 @@ The figure below outlines the applications routes and CRUD operation endpoints:
 
 ## 1. /login (POST)
 * __HTTP Request Verb:__ POST
-* __Required body:__ username, password
+* __Required Fields:__ username, password
 * __Expected response Code:__ 200, OK
-* __Expected response Data:__ Username and JWT bearer token
-* __Authentication methods:__ username & password
+* __Expected response Fields:__ username, token
+* __Authentication methods:__ username, password
 * __Description:__ Allows user to login to app.
 
 ![login-post](./docs/login-post.png)
 
 ## 2. /register (POST) 
 * __HTTP Request Verb:__ POST
-* __Required body:__ username, password
-* __Optional data:__ email
+* __Required fields:__ username, password
+* __Optional fields:__ email
 * __Expected response Code:__ 201, Created
-* __Expected response Data:__ id, username, email & login token
+* __Expected response Data:__ id, username, email, token
 * __Description:__ Allows user to create an account. Returns bearer token (automatically logs in new user)
 
 ![register-post](./docs/register-post.png) 
@@ -91,8 +133,8 @@ The figure below outlines the applications routes and CRUD operation endpoints:
 * __HTTP Request Verb:__ GET
 * __Required body:__ N/A
 * __Expected response Code:__ 200 OK
-* __Expected response Data:__ User data for all users (id, username, email, groups)
-* __Authentication methods:__ JWT Bearer token, is_admin
+* __Expected response fields:__ ALL Users(id, username, email, groups)
+* __Authentication methods:__ @jwt_required, is_admin()
 * __Description:__ Admin only: Retrieves details of all users
 
 ![users-get](./docs/users-get.png) 
@@ -103,19 +145,19 @@ The figure below outlines the applications routes and CRUD operation endpoints:
 * __Required body:__ N/A 
 * __Expected response Code:__ 200 OK
 * __Expected response Data:__ data for single user (id, username, email, groups)
-* __Authentication methods:__ JWT Token, must be user user_id or admin
-* __Description:__ allows a logged in user (or admin) to see their own user details
+* __Authentication methods:__ @jwt_required, is_user_or_admin(id)
+* __Description:__ allows a logged in user to see their own user details
 
 ![users/<user_id>/(get)](./docs/user-userid-get.png) 
 
 
 ## 5. /users/<user_id> (PATCH, PUT) 
 * __HTTP Request Verb:__ PATCH, PUT
-* __Required body:__ Optional fields: password, email
+* __Optional fields:__ password, email
 * __Expected response Code:__ 200 OK
-* __Expected response Data:__ updated user data (id, username, email)
-* __Authentication methods:__ JWT Token, must be user user_id or admin
-* __Description:__ Allows user (or an admin) to change their email or password. 
+* __Expected response Data:__ (id, username, email)
+* __Authentication methods:__ @jwt_required, is_user_or_admin(id)
+* __Description:__ Updates record <user_id> with provided email or password. 
 
 ![user/<user_id>/(PATCH)](./docs/users-userid-patch.png) 
 
@@ -125,8 +167,8 @@ The figure below outlines the applications routes and CRUD operation endpoints:
 * __Required body:__ N/A
 * __Expected response Code:__ 204, No Content
 * __Expected response Data:__ N/A
-* __Authentication methods:__ JWT Token, must be user user_id or admin
-* __Description:__ Deletes account with user id <user_id> (user user_id or admin only)
+* __Authentication methods:__ @jwt_required, is_user_or_admin(id)
+* __Description:__ Deletes account with user id <user_id> 
 
 ![users/<user-id>/(delete)](./docs/users-userid-delete.png) 
 
@@ -136,7 +178,7 @@ The figure below outlines the applications routes and CRUD operation endpoints:
 * __Required body:__ N/A
 * __Expected response Code:__ 200 OK
 * __Expected response Data:__ owned_books: [list of nested book details]
-* __Authentication methods:__ JWT Token, must be user user_id or admin
+* __Authentication methods:__ @jwt_required, is_user_or_admin(id)
 * __Description:__ returns a list of all the book titles owned by the user user_id. (user <user_id> or admin)
 
 ![users/userid/owned_books/(GET)](./docs/users-userid-ownedbooks.png) 
@@ -144,10 +186,10 @@ The figure below outlines the applications routes and CRUD operation endpoints:
 
 ## 8. /users/<user_id>/owned-books/ (POST)
 * __HTTP Request Verb:__ POST
-* __Required body:__ input data required = [book_id]
+* __Required field:__ book_id
 * __Expected response Code:__ 201, CREATED
 * __Expected response Data:__ details of book that was added to owned books
-* __Authentication methods:__ JWT Token, must be user user_id or admin
+* __Authentication methods:__ @jwt_required, is_user_or_admin(id)
 * __Description:__ Adds a book to <user_id> owned books
 
 ![users/<user_id>/owned_books/(POST)](./docs/users-userid-ownedbooks-post.png) 
@@ -158,7 +200,7 @@ The figure below outlines the applications routes and CRUD operation endpoints:
 * __Required body:__ N/A
 * __Expected response Code:__ 204, No Content
 * __Expected response Data:__ N/A
-* __Authentication methods:__ JWT Token, must be user user_id or admin
+* __Authentication methods:__ @jwt_required, is_user_or_admin(id)
 * __Description:__ removes a book entry from owned books
 
 ![/users/<user_id>/owned-books/<book_id> (DELETE)](./docs/users-userid-ownedbooks-bookid-delete.png) 
@@ -169,7 +211,7 @@ The figure below outlines the applications routes and CRUD operation endpoints:
 * __Required body:__ N/A
 * __Expected response Code:__ 200 OK
 * __Expected response Data:__ {} or book details
-* __Authentication methods:__ JWT Token, must be user user_id or admin
+* __Authentication methods:__ @jwt_required, is_user_or_admin(id)
 * __Description:__ Allows user to enter the ISBN of a book and see if it is in their owned_books. Will return {} if book not in owned books or the book details if it is in <user_id> owned_books. 
 _Note: if ISBN is not in books table will return a 404 error._
 
@@ -181,7 +223,7 @@ _Note: if ISBN is not in books table will return a 404 error._
 * __Required body:__ N/A
 * __Expected response Code:__ 200, OK
 * __Expected response Data:__ nested list books in <user_id>'s wanted books
-* __Authentication methods:__ JWT Token, must be user user_id or admin
+* __Authentication methods:__ @jwt_required, is_user_or_admin(id)
 * __Description:__ Returns list of books that are in <user_id> wanted_books list
 
 ![/users/<user_id>/wanted-books/ (GET)](./docs/users-userid-wantedbooks-get.png) 
@@ -189,10 +231,11 @@ _Note: if ISBN is not in books table will return a 404 error._
 
 ## 12. /users/<user_id>/wanted-books/ (POST)
 * __HTTP Request Verb:__ POST, PATCH, or PUT
-* __Required body:__ required: book_id(int), Optional: quality(must be "any", "fair", "good", "mint". default value = "any")
+* __Required fields:__ book_id(int) 
+* __Optional fields:__ quality(must be "any", "fair", "good", "mint". default value = "any")
 * __Expected response Code:__ 201, CREATED
 * __Expected response Data:__ returns book details & quality
-* __Authentication methods:__ JWT Token, must be user user_id or admin
+* __Authentication methods:__ @jwt_required, is_user_or_admin(id)
 * __Description:__ Adds book to <user_ids> wanted book list.
 
 ![/users/<user_id>/wanted-books/ (POST)](./docs/users-userid-wantedbooks-post.png) 
@@ -203,7 +246,7 @@ _Note: if ISBN is not in books table will return a 404 error._
 * __Required body:__ N/A
 * __Expected response Code:__ 204, NO CONTENT
 * __Expected response Data:__ N/A
-* __Authentication methods:__ JWT Token, must be user user_id or admin
+* __Authentication methods:__ @jwt_required, is_user_or_admin(id)
 * __Description:__ Removes book from user_id wanted books list.
 
 ![/users/<user_id>/wanted-books/<book_id> (DELETE)](./docs/users-userid-wantedbooks-bookid-delete.png) 
@@ -214,7 +257,7 @@ _Note: if ISBN is not in books table will return a 404 error._
 * __Required body:__ N/A
 * __Expected response Code:__ 200, OK
 * __Expected response Data:__ Nested list of books in users wanted_books list in requested category
-* __Authentication methods:__ JWT Token
+* __Authentication methods:__ @jwt_required
 * __Description:__ Returns <user_id> wanted books in specified <category>.  
 
 ![/users/<user_id>/wanted-books/categories/<category> (GET)](./docs/user-id-wantedbooks-categories-cat-get.png) 
@@ -225,7 +268,7 @@ _Note: if ISBN is not in books table will return a 404 error._
 * __Required body:__ N/A
 * __Expected response Code:__ 200, OK
 * __Expected response Data:__ Book details & quality wanted if book in users wanted list, else no content {}.
-* __Authentication methods:__ JWT Token
+* __Authentication methods:__ @jwt_required
 * __Description:__ Allows user to enter book ISBN and see if the book is in <user_id> wanted books list.
 
 ![/users/<user_id>/wanted-books/isbn/<isbn> (GET)](./docs/user-id-wantedbooks-isbn-isbn-get.png) 
@@ -233,10 +276,11 @@ _Note: if ISBN is not in books table will return a 404 error._
 
 ## 16. /books/ (POST)
 * __HTTP Request Verb:__ POST
-* __Required body:__ required fields =[title, isbns(list), author_ids(list)] optional fields =[series, category]
+* __Required fields:__ title, [isbns], [author_ids] 
+* __Optional fields:__ series, category
 * __Expected response Code:__ 201, CREATED
 * __Expected response Data:__ book details, fields [id, title, category, series, isbns(nested list), author_ids(nested list)]
-* __Authentication methods:__ JWT Token
+* __Authentication methods:__ @jwt_required
 * __Description:__ Adds a book to the database, will also add associated entries in the book_authors table, and isbns table.
 
 ![/books/ (POST)](./docs/books-post.png) 
@@ -247,7 +291,7 @@ _Note: if ISBN is not in books table will return a 404 error._
 * __Required body:__ N/A
 * __Expected response Code:__ 200, OK
 * __Expected response Data:__ All books in the database fields [id, title, category, series, isbns(nested list), author_ids(nested list)]
-* __Authentication methods:__ JWT Bearer token, Admin only
+* __Authentication methods:__ @jwt_required, is_admin()
 * __Description:__ Returns all books in database.
 
 ![/books/(GET)](./docs/books-get.png) 
@@ -258,7 +302,7 @@ _Note: if ISBN is not in books table will return a 404 error._
 * __Required body:__ N/A
 * __Expected response Code:__ 200, OK
 * __Expected response Data:__ <book_id> details: fields[id, title, category, series, isbns(nested list), author_ids(nested list)]
-* __Authentication methods:__ JWT Bearer token
+* __Authentication methods:__ @jwt_required
 * __Description:__ Gets a single book details based on <book_id>.
 
 ![/books/<book_id>(GET)](./docs/books-id-get.png) 
@@ -266,10 +310,11 @@ _Note: if ISBN is not in books table will return a 404 error._
 
 ## 19. /books/<book_id> (PATCH)
 * __HTTP Request Verb:__ PATCH
-* __Required body:__ optional fields =[title, isbns(list), author_ids(list)] optional fields =[series, category]
+* __Optional fields__ title, [isbns], [author_ids] 
+* __optional fields__ series, category
 * __Expected response Code:__ 200, OK
 * __Expected response Data:__ book details, fields [id, title, category, series, isbns(nested list), author_ids(nested list)]
-* __Authentication methods:__ JWT Token, Admin only
+* __Authentication methods:__ @jwt_required, is_admin()
 * __Description:__ updates book record in the database, will also add associated entries in the book_authors table, and isbns table.
 
 ![/books/<book_id> (PATCH)](./docs/books-is-patch.png) 
@@ -280,7 +325,7 @@ _Note: if ISBN is not in books table will return a 404 error._
 * __Required body:__ N/A
 * __Expected response Code:__ 204, No Content
 * __Expected response Data:__ N/A
-* __Authentication methods:__ JWT Token, Admin only
+* __Authentication methods:__ @jwt_required, is_admin()
 * __Description:__ Deletes book record from database.
 
 ![/books/<book_id> (DELETE)](./docs/books-id-delete.png) 
@@ -290,27 +335,28 @@ _Note: if ISBN is not in books table will return a 404 error._
 * __Required body:__ N/A
 * __Expected response Code:__ 200, OK
 * __Expected response Data:__ list of authors (nested[id, surname, given_names])
-* __Authentication methods:__ JWT Bearer token required
+* __Authentication methods:__ @jwt_required
 * __Description:__ Returns a list of authors & details in the database.
 
 ![/authors/(GET)](./docs/authors-get.png) 
 
 ## 22. /authors/ (POST) 
 * __HTTP Request Verb:__ POST
-* __Required body:__ required fields = [surname] optional fields = [given_names]
+* __required fields:__ surname 
+* __optional fields:__ given_names
 * __Expected response Code:__ 201, CREATED
 * __Expected response Data:__ author details [id, surname, given_names]
-* __Authentication methods:__ JWT Bearer token, Admin only
+* __Authentication methods:__ @jwt_required, is_admin()
 * __Description:__ Adds a new Author to the database.
 
 ![/authors/(POST)](./docs/authors-post.png) 
 
 ## 23. /authors/<author_id> (PATCH, PUT) 
 * __HTTP Request Verb:__ PATCH, PUT
-* __Required body:__ optional fields = [surname, given_names]
+* __Optional fields:__ surname, given_names
 * __Expected response Code:__ 200, OK
 * __Expected response Data:__ author details [id, surname, given_names]
-* __Authentication methods:__ JWT Bearer token, Admin only
+* __Authentication methods:__ @jwt_required, is_admin()
 * __Description:__ Updates an existing author in the database.
 
 ![/authors/<author_id>(PATCH, PUT)](./docs/author-id-put.png) 
@@ -320,7 +366,7 @@ _Note: if ISBN is not in books table will return a 404 error._
 * __Required body:__ N/A
 * __Expected response Code:__ 204, NO CONTENT
 * __Expected response Data:__ N/A
-* __Authentication methods:__ JWT Bearer token, Admin only
+* __Authentication methods:__ @jwt_required, is_admin()
 * __Description:__ Deletes author from database (will cascade delete any entries in book_author table where author id = <author_id>)
 
 ![/authors/<author_id>(DELETE)](./docs/author-id-delete.png) 
@@ -330,7 +376,7 @@ _Note: if ISBN is not in books table will return a 404 error._
 * __Required body:__ N/A
 * __Expected response Code:__ 200, OK
 * __Expected response fields:__ all groups(id, name, users(id, username), admin_id)
-* __Authentication methods:__ JWT Bearer token, Admin only
+* __Authentication methods:__ @jwt_required, is_admin()
 * __Description:__ Returns a list of all groups and their members.
 
 ![/groups/(GET)](./docs/groups-get.png) 
@@ -340,17 +386,18 @@ _Note: if ISBN is not in books table will return a 404 error._
 * __Required body:__ N/A
 * __Expected response Code:__ 200, OK
 * __Expected response Data:__ group (id, name, users(id, username), admin_id)
-* __Authentication methods:__ JWT Bearer token 
+* __Authentication methods:__ @jwt_required 
 * __Description:__ Returns <group_id> details
 
 ![/groups/<group_id>(GET)](./docs/groups-id-get.png) 
 
 ## 27. /groups/ (POST) 
 * __HTTP Request Verb:__ POST
-* __Required body:__ Required = [name], optional = [password, admin_id]
+* __Required fields:__ name 
+* __Optional fields__ password, admin_id
 * __Expected response Code:__ 201, CREATED
 * __Expected response Data:__ Selected Group details. Fields: group(id, name, users(id, username), admin_id)
-* __Authentication methods:__ JWT Bearer token 
+* __Authentication methods:__ @jwt_required 
 * __Description:__ Creates a group (and adds group creator user_id as member). If not admin_id is provided, default is the user id associated with the JWT Bearer Token. If no password is provided the group will be open for any user to join.
 
 ![/groups/(POST)](./docs/groups-post.png) 
@@ -360,17 +407,17 @@ _Note: if ISBN is not in books table will return a 404 error._
 * __Required body:__ N/A
 * __Expected response Code:__ 204, No CONTENT
 * __Expected response Data:__ N/A
-* __Authentication methods:__ JWT Bearer token, admin or group admin
+* __Authentication methods:__ @jwt_required, is_user_group_admin_or_admin(user_id, group_id)
 * __Description:__ Deletes group, delete cascades related records in user_group table.
 
 ![/groups/<group_id>(DELETE)](./docs/groups-id-delete.png) 
 
 ## 29. /groups/<group_id> (PATCH, PUT) 
 * __HTTP Request Verb:__ PATCH, PUT
-* __Required body:__ Optional fields [name, password, admin_id]
+* __Optional fields:__ name, password, admin_id
 * __Expected response Code:__ 200, OK
 * __Expected response Data:__ Updated group details. Fields: group(id, name, admin_id)
-* __Authentication methods:__ JWT Bearer token, admin or group admin
+* __Authentication methods:__ @jwt_required, is_user_group_admin_or_admin(user_id, group_id)
 * __Description:__ Updates group details: name, password, group administrator
 
 ![/groups/<group_id> (PATCH, PUT)](./docs/groups-id-patch.png) 
@@ -378,10 +425,10 @@ _Note: if ISBN is not in books table will return a 404 error._
 
 ## 30. /groups/<group_id> (POST) 
 * __HTTP Request Verb:__ POST
-* __Required body:__ required fields [password]
+* __Required Fields:__ password
 * __Expected response Code:__ 201, CREATED
 * __Expected response Data:__ Joined Group details. Fields: group(id, name, users(id, username), admin_id)
-* __Authentication methods:__  JWT Bearer token, password
+* __Authentication methods:__  @jwt_required, password
 * __Description:__ Join group <group_id>. Requires group password if one has been set by group admin. 
 
 ![/groups/<group_id>](./docs/groups-id-post.png) 
@@ -392,8 +439,8 @@ _Note: if ISBN is not in books table will return a 404 error._
 * __Required body:__ N/A
 * __Expected response Code:__  204, NO CONTENT
 * __Expected response Data:__ N/A
-* __Authentication methods:__ JWT Bearer token, is user or group admin or admin
-* __Description:__ Removes member from group. Can be performed by the user being removed, group admin ot DB administrator
+* __Authentication methods:__ @jwt_required, is_user_group_admin_or_admin(user_id, group_id) 
+* __Description:__ Removes member from group. Can be performed by the group admin ot DB administrator
 
 ![/groups/<group_id>/members/<user_id> (DELETE)](./docs/groups-is-members-id-delete.png) 
 
@@ -404,12 +451,10 @@ _Note: if ISBN is not in books table will return a 404 error._
 * __Required body:__ N/A
 * __Expected response Code:__ 200, OK
 * __Expected response Data:__ List of users and all wanted books: [username, wanted_book(book(book details), quality), ]
-* __Authentication methods:__ JWT Bearer token. Is group member or admin
+* __Authentication methods:__ @jwt_required. is_group_or_admin(group_id)
 * __Description:__ Returns all the books in the group members wanted_books lists
 
 ![/groups/<group_id>/wants(GET)](./docs/group-id-wantedbooks-get.png) 
-
-
 
 
 # R6 ERD for the database
